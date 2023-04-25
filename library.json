@@ -1,0 +1,25 @@
+{
+    "name": "MSFilterQuad",
+    "version": "0.0.1",
+    "keywords": "arduino, library, mass spectrometry, quadrupole",
+    "description": "Library for controlling quadrupole mass filter.",
+    "homepage": "https://github.com/Erriez/ErriezSerialTerminal",
+    "license": "",
+    "authors": {
+        "name": "Jasik",
+        "url": "https://github.com/Erriez",
+        "maintainer": true
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jurajjasik/MSFilterQuad.git",
+        "branch": "master"
+    },
+    "frameworks": "arduino",
+    "platforms": [
+        "atmelavr",
+        "atmelsam",
+        "espressif8266",
+        "espressif32"
+    ]
+}
