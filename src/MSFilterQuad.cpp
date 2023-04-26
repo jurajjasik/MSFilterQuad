@@ -216,39 +216,19 @@ bool MSFilterQuad3::init(float r0)
 	//turn off RF and DC
 	if (!_device->writeVoltages(0, 0, 0)) return false;
 	delay(delay_ms);
-	// read frequencies of all 3 ranges stored in the device n
+	
+    // read frequencies of all 3 ranges stored in the device n
 	// and calculate RF calibration factor
+    for(int i = 0; i < 3; ++i)
 	{
-		if (!_device->writeFreqRange(0)) return false;
+		if (!_device->writeFreqRange(i)) return false;
 		delay(delay_ms2);
 		int32_t f = _device->readFreq();
 		delay(delay_ms);
 		if (f < 0) return false;
-		_msfq[0].initRFFactor(r0, (float)f * 100.0);
-		_msfq[0].setVoltages(0, 0, 0);
-		if (!_msfq[0].isConnected()) return false;
-	}
-	
-	{
-		if (!_device->writeFreqRange(1)) return false;
-		delay(delay_ms2);
-		int32_t f = _device->readFreq();
-		delay(delay_ms);
-		if (f < 0) return false;
-		_msfq[1].initRFFactor(r0, (float)f * 100.0);
-		_msfq[1].setVoltages(0, 0, 0);
-		if (!_msfq[1].isConnected()) return false;
-	}
-	
-	{
-		if (!_device->writeFreqRange(2)) return false;
-		delay(delay_ms2);
-		int32_t f = _device->readFreq();
-		delay(delay_ms);
-		if (f < 0) return false;
-		_msfq[2].initRFFactor(r0, (float)f * 100.0);
-		_msfq[2].setVoltages(0, 0, 0);
-		if (!_msfq[2].isConnected()) return false;
+		_msfq[i].initRFFactor(r0, (float)f * 100.0);
+		_msfq[i].setVoltages(0, 0, 0);
+		if (!_msfq[i].isConnected()) return false;
 	}
 	
 	_freqRange = 2;
