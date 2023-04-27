@@ -237,7 +237,7 @@ bool MSFilterQuad3::init(float r0)
 }
 
 
-bool MSFilterQuad3::setFreqRange(int32_t freqRange){
+bool MSFilterQuad3::setFreqRangeIdx(int32_t freqRange){
 	bool rc = _device->writeFreqRange(freqRange);
 	if(rc) _freqRange = freqRange;
 	return rc;

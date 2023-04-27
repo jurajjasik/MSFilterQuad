@@ -223,7 +223,7 @@ void cmdFreqRange()
     char* arg = term.getNext();
     if (arg == NULL) {
         // Get
-        int v = msfq.getFreqRange();
+        int v = msfq.getActualFreqRangeIdx();
         if (v < 0) {
             Serial.println("ERROR: Not initialized.");
             return;
@@ -244,7 +244,7 @@ void cmdFreqRange()
         return;
     }
 
-    if (!msfq.setFreqRange(val)) {
+    if (!msfq.setFreqRangeIdx(val)) {
         printErrorCommunication();
         return;
     }
@@ -290,7 +290,7 @@ void cmdInfo()
     }
     {
         Serial.print("   Frequency range: ");
-        Serial.println(msfq.getFreqRange());
+        Serial.println(msfq.getActualFreqRangeIdx());
     }
 	{
         Serial.print("   Max m/z [u/e]: ");
