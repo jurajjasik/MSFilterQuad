@@ -10,33 +10,33 @@
 
 void initCommJanasCardQSource3(void)
 {
-	Serial2.begin(1500000);
-	
-	// See: https://forum.arduino.cc/t/arduino-due-rs485/434163/10
-	// Serial2 => USART1:
-	//// USART mode normal
-	//// Master Clock MCK is selected
-	//// Character length is 8 bits
-	//// USART operates in Asynchronous Mode
-	//// No parity
-	//// 1 stop bit
-	//// MSBF: Least Significant Bit is sent/received first.
-	//// MODE9: CHRL defines character length.
-	//// 
-	USART1->US_WPMR = 0x55534100;  //Unlock the USART Mode register, just in case. (mine wasn't locked).
-	
-	// Default: USART1->US_MR = 0x8C0 = 
-	USART1->US_MR |= (US_MR_USART_MODE_RS485 /*| US_MR_MSBF*/);  //Set mode to RS485
-	USART1->US_TTGR = 16;  // Transmitter Timeguard - number of periods 
-						  // after transmition and before turn off the RTS signal
-	
-	// Set 1500000 bauds/s - bug in Arduino lib
-	USART1->US_MR |= US_MR_OVER;
-	USART1->US_BRGR = US_BRGR_CD(7);
-	
-	// USART1 - RTS1 -> PA14 (Arduino pin 23)
-	REG_PIOA_ABSR &= ~PIO_ABSR_P14;   // Ensure that peripheral pin is switched to peripheral A
-	REG_PIOA_PDR |= PIO_PDR_P14;      // Disable the GPIO and switch to the peripheral
+    Serial2.begin(1500000);
+    
+    // See: https://forum.arduino.cc/t/arduino-due-rs485/434163/10
+    // Serial2 => USART1:
+    //// USART mode normal
+    //// Master Clock MCK is selected
+    //// Character length is 8 bits
+    //// USART operates in Asynchronous Mode
+    //// No parity
+    //// 1 stop bit
+    //// MSBF: Least Significant Bit is sent/received first.
+    //// MODE9: CHRL defines character length.
+    //// 
+    USART1->US_WPMR = 0x55534100;  //Unlock the USART Mode register, just in case. (mine wasn't locked).
+    
+    // Default: USART1->US_MR = 0x8C0 = 
+    USART1->US_MR |= (US_MR_USART_MODE_RS485 /*| US_MR_MSBF*/);  //Set mode to RS485
+    USART1->US_TTGR = 16;  // Transmitter Timeguard - number of periods 
+                          // after transmition and before turn off the RTS signal
+    
+    // Set 1500000 bauds/s - bug in Arduino lib
+    USART1->US_MR |= US_MR_OVER;
+    USART1->US_BRGR = US_BRGR_CD(7);
+    
+    // USART1 - RTS1 -> PA14 (Arduino pin 23)
+    REG_PIOA_ABSR &= ~PIO_ABSR_P14;   // Ensure that peripheral pin is switched to peripheral A
+    REG_PIOA_PDR |= PIO_PDR_P14;      // Disable the GPIO and switch to the peripheral
 }
 
 inline int32_t _limit(int32_t x, int32_t max, int32_t min)
@@ -50,9 +50,9 @@ inline int32_t _limit(int32_t x, int32_t max, int32_t min)
 void JanasCardQSource3::_clearBuffer()
 {
 #ifndef TEST
-	while(_comm->available() > 0) {
-		_comm->read();
-	}
+    while(_comm->available() > 0) {
+        _comm->read();
+    }
 #endif
 }
 
@@ -60,22 +60,22 @@ void JanasCardQSource3::_clearBuffer()
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
 #ifndef TEST
-	TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
+    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
     
-	_clearBuffer();
-	_comm->print(query);
+    _clearBuffer();
+    _comm->print(query);
     _comm->print('\r');
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
-	if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
-	
-	TRACE_QSOURCE3(
-		printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer); 
-	) 
+    if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
     
-	if (n) return true;
+    TRACE_QSOURCE3(
+        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer); 
+    ) 
+    
+    if (n) return true;
     return false;
 #else
-	return true;
+    return true;
 #endif
 }
 
@@ -87,7 +87,7 @@ bool JanasCardQSource3::_queryOK(const char* query)
     bool rc = _query(query, buff, 8);
     return (rc && (buff[0] == 'O') && (buff[1] == 'K'));
 #else
-	return true;
+    return true;
 #endif
 }
 
@@ -229,7 +229,7 @@ int32_t JanasCardQSource3::readFreq(void)
 
     return -1;
 #else
-	return 10000; // 1 MHz
+    return 10000; // 1 MHz
 #endif
 }
 

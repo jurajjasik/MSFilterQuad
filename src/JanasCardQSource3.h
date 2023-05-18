@@ -39,7 +39,7 @@ class JanasCardQSource3 {
 
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
-		void _clearBuffer(void);
+        void _clearBuffer(void);
     
     public:
         /// <summary>

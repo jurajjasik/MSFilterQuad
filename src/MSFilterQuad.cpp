@@ -9,7 +9,7 @@ MSFilterQuad::MSFilterQuad(
     // _dcFactor = 0.16784; // 1/2 * a0/q0 - theoretical value for infinity resolution
 
     _device = device;
-	
+    
     _calibPntsRF = &calibPntsRF;
     _splineRF = new CubicSplineInterp();
 
@@ -22,11 +22,11 @@ MSFilterQuad::MSFilterQuad(
 
 
 void MSFilterQuad::initRFFactor(float r0, float frequency) {
-	// _rfFactor = RF amp / (m/z)
+    // _rfFactor = RF amp / (m/z)
     // _rfFactor = q0 * pi**2 * atomic_mass / elementary_charge * (r0 * frequency)**2
     // q0 = 0.706
     _rfFactor = 7.22176e-8 * (r0 * r0 * frequency * frequency); // SI units
-	_dcFactor = 0.16784 * _rfFactor;  // 1/2 * a0/q0 - theoretical value for infinity resolution
+    _dcFactor = 0.16784 * _rfFactor;  // 1/2 * a0/q0 - theoretical value for infinity resolution
 }
 
 
@@ -51,10 +51,10 @@ float calculateCalib(
     const StateTuneParRecords* records,
     CubicSplineInterp* spline // can not be const because calcHunt change internal state
 ) {
-	if ( (records->_numberTuneParRecs) < 1 ) // none
-		return 0;
-	if ( (records->_numberTuneParRecs) < 2 ) // constant
-		return records->_tuneParVal[0];
+    if ( (records->_numberTuneParRecs) < 1 ) // none
+        return 0;
+    if ( (records->_numberTuneParRecs) < 2 ) // constant
+        return records->_tuneParVal[0];
     if ( (records->_numberTuneParRecs) < 3 ) { // linear interpolation
         float dX = records->_tuneParMZ[1] - records->_tuneParMZ[0];
         if ( dX > 0.0 || dX < 0.0 )
@@ -179,71 +179,71 @@ void MSFilterQuad::setUV(float u, float v) {
 
 
 MSFilterQuad3::MSFilterQuad3(
-	JanasCardQSource3* device,
+    JanasCardQSource3* device,
     StateTuneParRecords* calibPntsRF, 
     StateTuneParRecords* calibPntsDC
 )
 {
-	_device = device;
-	
-	_msfq[0] = MSFilterQuad(
-		device, 
-		calibPntsRF[0], 
-		calibPntsDC[0]
-	);
+    _device = device;
+    
+    _msfq[0] = MSFilterQuad(
+        device, 
+        calibPntsRF[0], 
+        calibPntsDC[0]
+    );
 
-	_msfq[1] = MSFilterQuad(
-		device, 
-		calibPntsRF[1], 
-		calibPntsDC[1]
-	);
-	
-	_msfq[2] = MSFilterQuad(
-		device, 
-		calibPntsRF[2], 
-		calibPntsDC[2]
-	);
+    _msfq[1] = MSFilterQuad(
+        device, 
+        calibPntsRF[1], 
+        calibPntsDC[1]
+    );
+    
+    _msfq[2] = MSFilterQuad(
+        device, 
+        calibPntsRF[2], 
+        calibPntsDC[2]
+    );
 }
 
 bool MSFilterQuad3::init(float r0)
 {
-	int delay_ms = 10;
-	int delay_ms2 = 10;
-	
-	// Activate RS485 mode
-	if (!_device->writeRSMode(1)) return false;
-	delay(delay_ms);
-	//turn off RF and DC
-	if (!_device->writeVoltages(0, 0, 0)) return false;
-	delay(delay_ms);
-	
+    int delay_ms = 10;
+    int delay_ms2 = 10;
+    
+    // Activate RS485 mode
+    if (!_device->writeRSMode(1)) return false;
+    delay(delay_ms);
+    //turn off RF and DC
+    if (!_device->writeVoltages(0, 0, 0)) return false;
+    delay(delay_ms);
+    
     // read frequencies of all 3 ranges stored in the device n
-	// and calculate RF calibration factor
+    // and calculate RF calibration factor
     for(int i = 0; i < 3; ++i)
-	{
-		if (!_device->writeFreqRange(i)) return false;
-		delay(delay_ms2);
-		int32_t f = _device->readFreq();
-		delay(delay_ms);
-		if (f < 0) return false;
-		_msfq[i].initRFFactor(r0, (float)f * 100.0);
-		_msfq[i].setVoltages(0, 0, 0);
-		if (!_msfq[i].isConnected()) return false;
-	}
-	
-	_freqRange = 2;
-	
-	return true;
+    {
+        if (!_device->writeFreqRange(i)) return false;
+        delay(delay_ms2);
+        int32_t f = _device->readFreq();
+        delay(delay_ms);
+        if (f < 0) return false;
+        _msfq[i].initRFFactor(r0, (float)f * 100.0);
+        _msfq[i].setVoltages(0, 0, 0);
+        if (!_msfq[i].isConnected()) return false;
+    }
+    
+    _freqRange = 2;
+    
+    return true;
 }
 
 
 bool MSFilterQuad3::setFreqRangeIdx(int32_t freqRange){
-	bool rc = _device->writeFreqRange(freqRange);
-	if(rc) _freqRange = freqRange;
-	return rc;
+    bool rc = _device->writeFreqRange(freqRange);
+    if(rc) _freqRange = freqRange;
+    return rc;
 }
 
 
 // MSFilterQuad* MSFilterQuad3::getActualMSFilter(){
-	// return &(_msfq[_freqRange]);
+    // return &(_msfq[_freqRange]);
 // }
