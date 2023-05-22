@@ -8,9 +8,10 @@
 #pragma message ("JanasCardQSource3 in test mode!")
 #endif
 
-void initCommJanasCardQSource3(void)
+void initCommJanasCardQSource3(uint32_t interrupt_priority)
 {
     Serial2.begin(1500000);
+    Serial2.setInterruptPriority(interrupt_priority);
     
     // See: https://forum.arduino.cc/t/arduino-due-rs485/434163/10
     // Serial2 => USART1:

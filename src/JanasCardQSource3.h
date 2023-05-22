@@ -11,7 +11,7 @@
 
 #include <Arduino.h>
 
-// #define TEST
+#define TEST
 
 #define Q_SOURCE3_SERIAL_BAUD_RATE 1500000
 
@@ -21,7 +21,7 @@
 #define Q_SOURCE3_MAX_FREQ 28000000
 #define Q_SOURCE3_MIN_FREQ 2000000
 
-void initCommJanasCardQSource3(void);
+void initCommJanasCardQSource3(uint32_t interrupt_priority);
 
 /// <summary>
 /// A low-level class for communication with QSsource3 (JanasCard).
