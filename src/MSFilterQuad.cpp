@@ -5,17 +5,17 @@ MSFilterQuad::MSFilterQuad(
     JanasCardQSource3* device,
     StateTuneParRecords& calibPntsRF,
     StateTuneParRecords& calibPntsDC
-) {    
+) {
     // _dcFactor = 0.16784; // 1/2 * a0/q0 - theoretical value for infinity resolution
 
     _device = device;
-    
+
     _calibPntsRF = &calibPntsRF;
     _splineRF = new CubicSplineInterp();
 
     _calibPntsDC = &calibPntsDC;
     _splineDC = new CubicSplineInterp();
-    
+
     initSplineRF();
     initSplineDC();
 }
@@ -27,6 +27,7 @@ void MSFilterQuad::initRFFactor(float r0, float frequency) {
     // q0 = 0.706
     _rfFactor = 7.22176e-8 * (r0 * r0 * frequency * frequency); // SI units
     _dcFactor = 0.16784 * _rfFactor;  // 1/2 * a0/q0 - theoretical value for infinity resolution
+    _MAX_MZ = MAX_RF_AMP / _rfFactor;
 }
 
 
@@ -36,8 +37,8 @@ void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) 
 }
 
 
-void MSFilterQuad::initSplineRF() { 
-    _initSpline(_calibPntsRF, _splineRF); 
+void MSFilterQuad::initSplineRF() {
+    _initSpline(_calibPntsRF, _splineRF);
 }
 
 
@@ -47,7 +48,7 @@ void MSFilterQuad::initSplineDC() {
 
 
 float calculateCalib(
-    float mz, 
+    float mz,
     const StateTuneParRecords* records,
     CubicSplineInterp* spline // can not be const because calcHunt change internal state
 ) {
@@ -58,13 +59,13 @@ float calculateCalib(
     if ( (records->_numberTuneParRecs) < 3 ) { // linear interpolation
         float dX = records->_tuneParMZ[1] - records->_tuneParMZ[0];
         if ( dX > 0.0 || dX < 0.0 )
-            return 
-                (records->_tuneParVal[1] - records->_tuneParVal[0]) 
+            return
+                (records->_tuneParVal[1] - records->_tuneParVal[0])
                 / dX * ( mz - records->_tuneParMZ[0] )
                 + records->_tuneParVal[0];
         return records->_tuneParVal[0];
     }
-    
+
     return spline->calcHunt(mz); // spline interpolation
 }
 
@@ -72,7 +73,7 @@ float calculateCalib(
 void MSFilterQuad::setDCOffst(float v)
 {
     float diff = getDCDiff();
-    
+
     setDC1(v + diff);
     setDC2(v - diff);
 }
@@ -96,6 +97,14 @@ void MSFilterQuad::setDCOn(bool v)
 
 void MSFilterQuad::setDC1(float v)
 {
+    if(v < MIN_DC)
+    {
+        v = MIN_DC;
+    }
+    else if(v > MAX_DC)
+    {
+        v = MAX_DC;
+    }
     _connected = _device->writeDC(1, (int32_t)(v * 1000));
     if (_connected) _dc1 = v;
 }
@@ -103,13 +112,21 @@ void MSFilterQuad::setDC1(float v)
 
 void MSFilterQuad::setDC2(float v)
 {
+    if(v < MIN_DC)
+    {
+        v = MIN_DC;
+    }
+    else if(v > MAX_DC)
+    {
+        v = MAX_DC;
+    }
     _connected = _device->writeDC(2, (int32_t)(v * 1000));
     if (_connected) _dc2 = v;
 }
 
 
 float MSFilterQuad::calcMaxMz(void) const {
-    return MAX_RF_AMP / _rfFactor;
+    return _MAX_MZ;
 }
 
 
@@ -122,6 +139,14 @@ float MSFilterQuad::calcDC(float mz) {
 }
 
 void MSFilterQuad::setMZ(float mz) {
+    if(mz < 0.0)
+    {
+        mz = 0.0;
+    }
+    else if(mz > _MAX_MZ)
+    {
+        mz = _MAX_MZ;
+    }
     float V = calcRF(mz); // RF amplitude
     float U = calcDC(mz); // DC difference
     setUV(U, V);
@@ -139,6 +164,14 @@ void MSFilterQuad::setDCDiff(float v)
 
 void MSFilterQuad::setRFAmp(float v)
 {
+    if(v < 0.0)
+    {
+        v = 0.0;
+    }
+    else if(v > MAX_RF_AMP)
+    {
+        v = MAX_RF_AMP;
+    }
     _connected = _device->writeAC((uint32_t)(v * 1000));
     if (_connected) _rfAmp = v;
 }
@@ -146,6 +179,33 @@ void MSFilterQuad::setRFAmp(float v)
 
 void MSFilterQuad::setVoltages(float rf, float dc1, float dc2)
 {
+    if(rf < 0.0)
+    {
+        rf = 0.0;
+    }
+    else if(rf > MAX_RF_AMP)
+    {
+        rf = MAX_RF_AMP;
+    }
+
+    if(dc1 < MIN_DC)
+    {
+        dc1 = MIN_DC;
+    }
+    else if(dc1 > MAX_DC)
+    {
+        dc1 = MAX_DC;
+    }
+
+    if(dc2 < MIN_DC)
+    {
+        dc2 = MIN_DC;
+    }
+    else if(dc2 > MAX_DC)
+    {
+        dc2 = MAX_DC;
+    }
+
     _connected = _device->writeVoltages(
         (int32_t)(dc1 * 1000),
         (int32_t)(dc2 * 1000),
@@ -180,27 +240,27 @@ void MSFilterQuad::setUV(float u, float v) {
 
 MSFilterQuad3::MSFilterQuad3(
     JanasCardQSource3* device,
-    StateTuneParRecords* calibPntsRF, 
+    StateTuneParRecords* calibPntsRF,
     StateTuneParRecords* calibPntsDC
 )
 {
     _device = device;
-    
+
     _msfq[0] = MSFilterQuad(
-        device, 
-        calibPntsRF[0], 
+        device,
+        calibPntsRF[0],
         calibPntsDC[0]
     );
 
     _msfq[1] = MSFilterQuad(
-        device, 
-        calibPntsRF[1], 
+        device,
+        calibPntsRF[1],
         calibPntsDC[1]
     );
-    
+
     _msfq[2] = MSFilterQuad(
-        device, 
-        calibPntsRF[2], 
+        device,
+        calibPntsRF[2],
         calibPntsDC[2]
     );
 }
@@ -209,14 +269,14 @@ bool MSFilterQuad3::init(float r0)
 {
     int delay_ms = 10;
     int delay_ms2 = 10;
-    
+
     // Activate RS485 mode
     if (!_device->writeRSMode(1)) return false;
     delay(delay_ms);
     //turn off RF and DC
     if (!_device->writeVoltages(0, 0, 0)) return false;
     delay(delay_ms);
-    
+
     // read frequencies of all 3 ranges stored in the device n
     // and calculate RF calibration factor
     for(int i = 0; i < 3; ++i)
@@ -230,20 +290,14 @@ bool MSFilterQuad3::init(float r0)
         _msfq[i].setVoltages(0, 0, 0);
         if (!_msfq[i].isConnected()) return false;
     }
-    
+
     _freqRange = 2;
-    
+
     return true;
 }
-
 
 bool MSFilterQuad3::setFreqRangeIdx(int32_t freqRange){
     bool rc = _device->writeFreqRange(freqRange);
     if(rc) _freqRange = freqRange;
     return rc;
 }
-
-
-// MSFilterQuad* MSFilterQuad3::getActualMSFilter(){
-    // return &(_msfq[_freqRange]);
-// }

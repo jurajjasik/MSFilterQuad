@@ -5,7 +5,9 @@
 #include <JanasCardQSource3.h>
 #include <CubicSplineInterp.h>
 
-#define MAX_RF_AMP 325.0
+#define MAX_RF_AMP (Q_SOURCE3_MAX_AC / 1000.0 / 2.0)
+#define MAX_DC (Q_SOURCE3_MAX_DC / 1000.0)
+#define MIN_DC (Q_SOURCE3_MIN_DC / 1000.0)
 
 #define MAX_NUMBER_OF_TUNE_PAR_RECORDS CSI_MAX_TAB_POINTS
 
@@ -35,6 +37,8 @@ private:
     float _rfAmp = NAN;
     bool _polarity = true;
     bool _dcOn = true;
+    
+    float _MAX_MZ = NAN;
 
     JanasCardQSource3* _device;
     
