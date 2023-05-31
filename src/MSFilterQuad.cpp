@@ -1,5 +1,6 @@
 #include "MSFilterQuad.h"
 
+#define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
 
 MSFilterQuad::MSFilterQuad(
     JanasCardQSource3* device,
@@ -72,6 +73,8 @@ float calculateCalib(
 
 void MSFilterQuad::setDCOffst(float v)
 {
+    TRACE_MSFQ( printf("setDCOffst(%d)\r\n", (int)(v * 1000)); )
+
     float diff = getDCDiff();
 
     setDC1(v + diff);
@@ -81,6 +84,7 @@ void MSFilterQuad::setDCOffst(float v)
 
 void MSFilterQuad::setRodPolarityPos(bool v)
 {
+    TRACE_MSFQ( printf("setRodPolarityPos(%d)\r\n", v); )
     if (_polarity != v) {
         setDCDiff(-getDCDiff());
         _polarity = v;
@@ -90,6 +94,7 @@ void MSFilterQuad::setRodPolarityPos(bool v)
 
 void MSFilterQuad::setDCOn(bool v)
 {
+    TRACE_MSFQ( printf("setDCOn(%d)\r\n", v); )
     _dcOn = v;
     setMZ(_mz);
 }
@@ -97,6 +102,7 @@ void MSFilterQuad::setDCOn(bool v)
 
 void MSFilterQuad::setDC1(float v)
 {
+    TRACE_MSFQ( printf("setDC1(%d)\r\n", (int)(v * 1000)); )
     if(v < MIN_DC)
     {
         v = MIN_DC;
@@ -112,6 +118,7 @@ void MSFilterQuad::setDC1(float v)
 
 void MSFilterQuad::setDC2(float v)
 {
+    TRACE_MSFQ( printf("setDC2(%d)\r\n", (int)(v * 1000)); )
     if(v < MIN_DC)
     {
         v = MIN_DC;
@@ -139,6 +146,7 @@ float MSFilterQuad::calcDC(float mz) {
 }
 
 void MSFilterQuad::setMZ(float mz) {
+    TRACE_MSFQ( printf("setMZ(%d)\r\n", (int)(mz * 1000)); )
     if(mz < 0.0)
     {
         mz = 0.0;
@@ -156,6 +164,7 @@ void MSFilterQuad::setMZ(float mz) {
 
 void MSFilterQuad::setDCDiff(float v)
 {
+    TRACE_MSFQ( printf("setDCDiff(%d)\r\n", (int)(v * 1000)); )
     float ofst = getDCOffst();
     setDC1(ofst + v);
     setDC2(ofst - v);
@@ -164,6 +173,7 @@ void MSFilterQuad::setDCDiff(float v)
 
 void MSFilterQuad::setRFAmp(float v)
 {
+    TRACE_MSFQ( printf("setRFAmp(%d)\r\n", (int)(v * 1000)); )
     if(v < 0.0)
     {
         v = 0.0;
@@ -179,6 +189,7 @@ void MSFilterQuad::setRFAmp(float v)
 
 void MSFilterQuad::setVoltages(float rf, float dc1, float dc2)
 {
+    TRACE_MSFQ( printf("setVoltages(%d, %d, %d)\r\n", (int)(rf * 1000), (int)(dc1 * 1000), (int)(dc2 * 1000)); )
     if(rf < 0.0)
     {
         rf = 0.0;
@@ -220,6 +231,7 @@ void MSFilterQuad::setVoltages(float rf, float dc1, float dc2)
 
 
 void MSFilterQuad::setUV(float u, float v) {
+    TRACE_MSFQ( printf("setUV(%d, %d)\r\n", (int)(u * 1000), (int)(v * 1000)); )
     float dcOffst = getDCOffst();
     float dc1 = dcOffst;
     float dc2 = dcOffst;
@@ -234,7 +246,7 @@ void MSFilterQuad::setUV(float u, float v) {
             dc2 += u;
         }
     }
-    setVoltages(u, dc1, dc2);
+    setVoltages(v, dc1, dc2);
 }
 
 
