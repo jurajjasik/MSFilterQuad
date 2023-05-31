@@ -1,6 +1,7 @@
 #include "MSFilterQuad.h"
 
-#define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
+// #define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
+#define TRACE_MSFQ(x_)
 
 MSFilterQuad::MSFilterQuad(
     JanasCardQSource3* device,
@@ -40,11 +41,13 @@ void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) 
 
 void MSFilterQuad::initSplineRF() {
     _initSpline(_calibPntsRF, _splineRF);
+    setMZ(_mz);  // set mz using new calibration values
 }
 
 
 void MSFilterQuad::initSplineDC() {
     _initSpline(_calibPntsDC, _splineDC);
+    setMZ(_mz);  // set mz using new calibration values
 }
 
 
