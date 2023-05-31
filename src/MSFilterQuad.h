@@ -31,14 +31,14 @@ private:
 
     bool _connected = false;
 
-    float _mz = NAN;
-    float _dc1 = NAN;
-    float _dc2 = NAN;
-    float _rfAmp = NAN;
+    float _mz = 0.0;
+    float _dc1 = 0.0;
+    float _dc2 = 0.0;
+    float _rfAmp = 0.0;
     bool _polarity = true;
     bool _dcOn = true;
     
-    float _MAX_MZ = NAN;
+    float _MAX_MZ = 0.0;
 
     JanasCardQSource3* _device;
     
