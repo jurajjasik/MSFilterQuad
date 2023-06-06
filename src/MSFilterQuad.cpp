@@ -3,6 +3,13 @@
 // #define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
 #define TRACE_MSFQ(x_)
 
+
+void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) {
+    if (records->_numberTuneParRecs > 2)
+        spline->init(records->_tuneParMZ, records->_tuneParVal, records->_numberTuneParRecs);
+}
+
+
 MSFilterQuad::MSFilterQuad(
     JanasCardQSource3* device,
     StateTuneParRecords& calibPntsRF,
@@ -18,8 +25,8 @@ MSFilterQuad::MSFilterQuad(
     _calibPntsDC = &calibPntsDC;
     _splineDC = new CubicSplineInterp();
 
-    initSplineRF();
-    initSplineDC();
+    _initSpline(_calibPntsRF, _splineRF);
+    _initSpline(_calibPntsDC, _splineDC);
 }
 
 
@@ -30,12 +37,6 @@ void MSFilterQuad::initRFFactor(float r0, float frequency) {
     _rfFactor = 7.22176e-8 * (r0 * r0 * frequency * frequency); // SI units
     _dcFactor = 0.16784 * _rfFactor;  // 1/2 * a0/q0 - theoretical value for infinity resolution
     _MAX_MZ = MAX_RF_AMP / _rfFactor;
-}
-
-
-void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) {
-    if (records->_numberTuneParRecs > 2)
-        spline->init(records->_tuneParMZ, records->_tuneParVal, records->_numberTuneParRecs);
 }
 
 
