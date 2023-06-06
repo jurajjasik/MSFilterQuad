@@ -26,7 +26,7 @@ void printErrorCommunication();
 void printConsoleChar();
 
 void initSerialTerminal();
-void initCommJanasCardQSource3();
+void initCommJanasCardQSource3(uint32_t interrupt_priority);
 
 void maintainDisplay();
 void refreshDisplay();
@@ -75,20 +75,20 @@ void setup()
 
     // initMSFQ();
     initSerialTerminal();
-    initCommJanasCardQSource3();
+    initCommJanasCardQSource3(5);
 
     Serial.println("Trying to init QSource3. Press CTRL-C to break...");
     flagTurnOn = true;
 	
 	// just to test info
-	tuneParRecordsAC[2]._numberTuneParRecs = 3;
-	tuneParRecordsAC[2]._tuneParMZ[0] = 0;
-	tuneParRecordsAC[2]._tuneParMZ[1] = 10;
-	tuneParRecordsAC[2]._tuneParMZ[2] = 100;
-	tuneParRecordsAC[2]._tuneParVal[0] = -0.002;
-	tuneParRecordsAC[2]._tuneParVal[1] = 0.0123;
-	tuneParRecordsAC[2]._tuneParVal[2] = -0.09;
-	msfq.getMSFilter(2)->initSplineRF();
+	// tuneParRecordsAC[2]._numberTuneParRecs = 3;
+	// tuneParRecordsAC[2]._tuneParMZ[0] = 0;
+	// tuneParRecordsAC[2]._tuneParMZ[1] = 10;
+	// tuneParRecordsAC[2]._tuneParMZ[2] = 100;
+	// tuneParRecordsAC[2]._tuneParVal[0] = -0.002;
+	// tuneParRecordsAC[2]._tuneParVal[1] = 0.0123;
+	// tuneParRecordsAC[2]._tuneParVal[2] = -0.09;
+	// msfq.getMSFilter(2)->initSplineRF();
 	
 }
 
