@@ -84,7 +84,8 @@ public:
     /// Sets DC voltage of quadrupole rods 1. 
     /// </summary>
     /// <param name="v">- DC voltage in Volts</param>
-    void setDC1(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setDC1(float v);
 
     /// <summary>
     /// Gets DC voltage of quadrupole rods 1.
@@ -97,7 +98,8 @@ public:
     /// Sets DC voltage of quadrupole rods 2.
     /// </summary>
     /// <param name="v">- DC voltage in Volts</param>
-    void setDC2(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setDC2(float v);
 
     /// <summary>
     /// Gets DC voltage of quadrupole rods 2.
@@ -115,7 +117,8 @@ public:
     /// DC2 = offset - v.
     /// </summary>
     /// <param name="v">- DC difference</param>
-    void setDCDiff(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setDCDiff(float v);
 
     /// <summary>
     /// Gets DC differential voltage of the quadrupole rods referenced to 
@@ -129,7 +132,8 @@ public:
     /// Sets RF amplitude.
     /// </summary>
     /// <param name="v">- RF amplitude, 0 to Vp.</param>
-    void setRFAmp(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setRFAmp(float v);
 
     /// <summary>
     /// Gets RF amplitude.
@@ -144,14 +148,16 @@ public:
     /// <param name="rf">- RF amplitude, 0 to Vpp.</param>
     /// <param name="dc1">- DC1 voltage in Volts</param>
     /// <param name="dc2">- DC2 voltage in Volts</param>
-    void setVoltages(float rf, float dc1, float dc2);
+    /// <returns>true if last communication was successfull</returns>
+    bool setVoltages(float rf, float dc1, float dc2);
 
     /// <summary>
     /// Sets DC offset (field axis of the quadrupole). 
     /// Keeps DC difference.
     /// </summary>
     /// <param name="v">- DC offset value in Volts.</param>
-    void setDCOffst(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setDCOffst(float v);
 
     /// <summary>
     /// Gets DC offset.
@@ -164,7 +170,8 @@ public:
     /// Sets rod polarity.
     /// </summary>
     /// <param name="v">- true for positive and false for negative polarity.</param>
-    void setRodPolarityPos(bool v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setRodPolarityPos(bool v);
 
     /// <summary>
     /// Gets rod polarity.
@@ -184,7 +191,8 @@ public:
     /// </summary>
     /// <param name="u">- DC difference</param>
     /// <param name="v">- RF amplitude, 0 to Vp.</param>
-    void setUV(float u, float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setUV(float u, float v);
 
     /// <summary>
     /// Recalculates spline calibration for RF amplitude (m/z calibration).
@@ -204,20 +212,25 @@ public:
     /// Sets m/z.
     /// </summary>
     /// <param name="v"></param>
-    void setMZ(float v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setMZ(float v);
 
     /// <summary>
     /// Gets cached m/z.
     /// </summary>
     /// <returns></returns>
     float getMZ() const { return _mz; }
+    
+    /// <returns>true if last communication was successfull</returns>
+    bool resetMZ(void);
 
     /// <summary>
     /// Turns on/off DC difference.
         /// It activates a mass filter mode. The mz is set according to internal _mz value. 
     /// </summary>
     /// <param name="v">- true - DC on, quadrupole in mass filter mode; false - DC off,  quadrupole in transmition mode.</param>
-    void setDCOn(bool v);
+    /// <returns>true if last communication was successfull</returns>
+    bool setDCOn(bool v);
 
     /// <summary>
     /// Checks DC on/off state.
