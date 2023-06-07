@@ -1,6 +1,6 @@
 {
     "name": "MSFilterQuad",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "keywords": "arduino, library, mass spectrometry, quadrupole",
     "description": "Library for controlling quadrupole mass filter.",
     "homepage": "https://github.com/jurajjasik/MSFilterQuad",
