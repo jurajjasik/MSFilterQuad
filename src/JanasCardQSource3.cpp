@@ -12,6 +12,7 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority)
 {
     Serial2.begin(1500000);
     Serial2.setInterruptPriority(interrupt_priority);
+    Serial2.setTimeout(1000);
     
     // See: https://forum.arduino.cc/t/arduino-due-rs485/434163/10
     // Serial2 => USART1:
@@ -64,9 +65,28 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
     
     _clearBuffer();
+    TRACE_QSOURCE3( printf("   _clearBuffer ... OK\r\n"); )
     _comm->print(query);
     _comm->print('\r');
-    size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
+    TRACE_QSOURCE3( printf("   print ... OK\r\n"); )
+    
+    // workaround for ISR
+    // timeOut in readBytesUntil does not work in ISR
+    bool no_response = true;
+    for(int i=0; i < 655350; ++i)  // try a few times...
+    {
+        if(_comm->available())
+        {
+            no_response = false;
+            break;
+        }
+    }
+    if(no_response)
+    {
+        TRACE_QSOURCE3( printf("_comm ... no response from device\r\n"); ) 
+        return false;
+    }
+    size_t n = _comm->readBytesUntil('\r', buffer, buff_len);  // problem in ISR - if device is not connected it stacks forever
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
     
     TRACE_QSOURCE3(
