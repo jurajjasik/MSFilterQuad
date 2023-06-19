@@ -158,7 +158,7 @@ bool JanasCardQSource3::writeDC(uint32_t output, int32_t value)
 
 bool JanasCardQSource3::writeAC(uint32_t value)
 {
-    value = value > Q_SOURCE3_MAX_AC ? Q_SOURCE3_MAX_AC : 0;
+    value = value > Q_SOURCE3_MAX_AC ? Q_SOURCE3_MAX_AC : value;
     char buff[64];
 
     snprintf(buff, 64, "#AC %d", value);
