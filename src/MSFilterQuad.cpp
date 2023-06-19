@@ -120,7 +120,7 @@ bool MSFilterQuad::setDC1(float v)
     {
         v = MAX_DC;
     }
-    _connected = _device->writeDC(1, (int32_t)(v * 1000));
+    _connected = _device->writeDC(1, (int32_t)(v * 1000));  // convert V to mV
     if (_connected) 
     {
         _dc1 = v;
@@ -141,7 +141,7 @@ bool MSFilterQuad::setDC2(float v)
     {
         v = MAX_DC;
     }
-    _connected = _device->writeDC(2, (int32_t)(v * 1000));
+    _connected = _device->writeDC(2, (int32_t)(v * 1000));  // convert V to mV
     if (_connected) 
     {
         _dc2 = v;
@@ -204,7 +204,7 @@ bool MSFilterQuad::setRFAmp(float v)
     {
         v = MAX_RF_AMP;
     }
-    _connected = _device->writeAC((uint32_t)(v * 1000));
+    _connected = _device->writeAC((uint32_t)(v * 2000));  // convert V(0-p) to mV(p-p)
     if (_connected) 
     {
         _rfAmp = v;
@@ -245,9 +245,9 @@ bool MSFilterQuad::setVoltages(float rf, float dc1, float dc2)
     }
 
     _connected = _device->writeVoltages(
-        (int32_t)(dc1 * 1000),
-        (int32_t)(dc2 * 1000),
-        (uint32_t)(rf * 1000)
+        (int32_t)(dc1 * 1000),  // convert V to mV
+        (int32_t)(dc2 * 1000),  // convert V to mV
+        (uint32_t)(rf * 2000)  // convert V(0-p) to mV(p-p)
     );
     if (_connected) {
         _dc1 = dc1;
