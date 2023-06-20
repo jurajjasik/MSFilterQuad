@@ -171,21 +171,20 @@ bool JanasCardQSource3::writeAC(uint32_t value)
 }
 
 
+// fast writing without connection checking
 bool JanasCardQSource3::writeVoltages(int32_t dc1, int32_t dc2, uint32_t ac)
 {
+    static char buff[128];
+    
     dc1 = _limit(dc1, Q_SOURCE3_MAX_DC, Q_SOURCE3_MIN_DC);
     dc2 = _limit(dc2, Q_SOURCE3_MAX_DC, Q_SOURCE3_MIN_DC);
     ac = ac > Q_SOURCE3_MAX_AC ? Q_SOURCE3_MAX_AC : ac;
 
-    char buff[128];
-
-    snprintf(buff, 128, "#C %d %d %d", dc1, dc2, ac);
-    if (_queryOK(buff))
-    {
-        return true;
-    }
-
-    return false;
+    snprintf(buff, 128, "#C %d %d %d\r", dc1, dc2, ac);
+    
+    _comm->write(buff);
+    
+    return true;
 }
 
 

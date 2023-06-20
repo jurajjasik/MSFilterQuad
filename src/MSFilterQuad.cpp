@@ -164,6 +164,7 @@ float MSFilterQuad::calcDC(float mz) {
     return _dcFactor * (1.0 + calculateCalib(mz, _calibPntsDC, _splineDC)) * mz;
 }
 
+// cca 240 us (w/o splines calculation)
 bool MSFilterQuad::setMZ(float mz) {
     TRACE_MSFQ( printf("setMZ(%d)\r\n", (int)(mz * 1000)); )
     if(mz < 0.0)
@@ -329,6 +330,7 @@ bool MSFilterQuad3::init(float r0)
         if (f < 0) return false;
         _msfq[i].initRFFactor(r0, (float)f * 100.0);
         _msfq[i].setVoltages(0, 0, 0);
+        delay(delay_ms);
         if (!_msfq[i].isConnected()) return false;
     }
 
