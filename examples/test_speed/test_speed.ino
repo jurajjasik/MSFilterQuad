@@ -5,20 +5,19 @@ StateTuneParRecords tuneParRecordsAC;
 StateTuneParRecords tuneParRecordsDC;
 
 	
-JanasCardQSource3 _qSource3 = JanasCardQSource3(&Serial1);
+JanasCardQSource3 _qSource3 = JanasCardQSource3();
 
 
-MSFilterQuad _msFilter = MSFilterQuad(
-	&_qSource3, 
-	tuneParRecordsAC, 
-	tuneParRecordsDC
+static MSFilterQuad3 _msfq = MSFilterQuad3(
+    &_qSource3,
+    &tuneParRecordsAC,
+    &tuneParRecordsDC
 );
 
 
 void setup(){
-	_msFilter.initRFFactor(1e6, 2.75e-3);
 	
-	Serial.begin(9600);
+	Serial.begin(115200);
 	while (!Serial) {
 		; // wait for serial port to connect. Needed for native USB port only
 	}
@@ -68,20 +67,31 @@ void setup(){
 	
 	//
 	// randomSeed(0); // 145 us
-	randomSeed(100); // 145 us
-	for (int i = 0; i < MAX_NUMBER_OF_TUNE_PAR_RECORDS; ++i){
-		float mz = 500.0 * (float)i / MAX_NUMBER_OF_TUNE_PAR_RECORDS;
-		tuneParRecordsDC._tuneParMZ[i] =  mz;
-		tuneParRecordsAC._tuneParMZ[i] =  mz;
-		tuneParRecordsDC._tuneParVal[i] = (float)random(1000) / 1000.0;
-		tuneParRecordsAC._tuneParVal[i] = (float)random(1000) / 1000.0;
-	}
-	tuneParRecordsAC._numberTuneParRecs = MAX_NUMBER_OF_TUNE_PAR_RECORDS;
-	tuneParRecordsDC._numberTuneParRecs = MAX_NUMBER_OF_TUNE_PAR_RECORDS;
+    
+    
+	// randomSeed(100); // 145 us
+	// for (int i = 0; i < MAX_NUMBER_OF_TUNE_PAR_RECORDS; ++i){
+		// float mz = 500.0 * (float)i / MAX_NUMBER_OF_TUNE_PAR_RECORDS;
+		// tuneParRecordsDC._tuneParMZ[i] =  mz;
+		// tuneParRecordsAC._tuneParMZ[i] =  mz;
+		// tuneParRecordsDC._tuneParVal[i] = (float)random(1000) / 1000.0;
+		// tuneParRecordsAC._tuneParVal[i] = (float)random(1000) / 1000.0;
+	// }
+	// tuneParRecordsAC._numberTuneParRecs = MAX_NUMBER_OF_TUNE_PAR_RECORDS;
+	// tuneParRecordsDC._numberTuneParRecs = MAX_NUMBER_OF_TUNE_PAR_RECORDS;
 	
-	_msFilter.initSplineRF();
-	_msFilter.initSplineDC();
-	
+    initCommJanasCardQSource3(0);
+    _msfq.init(6e-3);
+    
+    for(int i = 0; i < 3; ++i)
+    {
+        MSFilterQuad* m = _msfq.getMSFilter(i);
+        m->initSplineRF();
+        m->initSplineDC();
+        m->setMZ(0.0);
+    }
+    
+	_msfq.setFreqRangeIdx(1);  // middle
 }
 
 
@@ -89,9 +99,9 @@ void loop() {
 	long N = 1000;
 	long acc = 0;
 	for (int i = 0; i < N; ++i) {
-		float mz = i % 500;
+		float mz = i % 100;
 		long t0 = micros();
-		_msFilter.setMZ(mz);
+		_msfq.getActualMSFilter()->setMZ(mz);
 		long t1 = micros();
 		acc += (t1 - t0);
 	}
