@@ -12,17 +12,17 @@ void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) 
 
 MSFilterQuad::MSFilterQuad(
     JanasCardQSource3* device,
-    StateTuneParRecords& calibPntsRF,
-    StateTuneParRecords& calibPntsDC
+    StateTuneParRecords* calibPntsRF,
+    StateTuneParRecords* calibPntsDC
 ) {
     // _dcFactor = 0.16784; // 1/2 * a0/q0 - theoretical value for infinity resolution
 
     _device = device;
 
-    _calibPntsRF = &calibPntsRF;
+    _calibPntsRF = calibPntsRF;
     _splineRF = new CubicSplineInterp();
 
-    _calibPntsDC = &calibPntsDC;
+    _calibPntsDC = calibPntsDC;
     _splineDC = new CubicSplineInterp();
 
     _initSpline(_calibPntsRF, _splineRF);
@@ -288,23 +288,14 @@ MSFilterQuad3::MSFilterQuad3(
 {
     _device = device;
 
-    _msfq[0] = MSFilterQuad(
-        device,
-        calibPntsRF[0],
-        calibPntsDC[0]
-    );
-
-    _msfq[1] = MSFilterQuad(
-        device,
-        calibPntsRF[1],
-        calibPntsDC[1]
-    );
-
-    _msfq[2] = MSFilterQuad(
-        device,
-        calibPntsRF[2],
-        calibPntsDC[2]
-    );
+    for(int i = 0; i < 3; ++i)
+    {
+        _msfq[i] = MSFilterQuad(
+            device,
+            &(calibPntsRF[i]),
+            &(calibPntsDC[i])
+        );
+    }
 }
 
 bool MSFilterQuad3::init(float r0)

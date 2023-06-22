@@ -59,8 +59,8 @@ public:
     /// <param name="calibPntsDC">- DC difference calibration table</param>
     MSFilterQuad(
         JanasCardQSource3* device,
-        StateTuneParRecords& calibPntsRF,
-        StateTuneParRecords& calibPntsDC
+        StateTuneParRecords* calibPntsRF,
+        StateTuneParRecords* calibPntsDC
     );
     
     // Service methods
