@@ -11,7 +11,7 @@
 
 #include <Arduino.h>
 
-// #define TEST
+// #define TEST_Q_SOURCE3
 
 #define Q_SOURCE3_SERIAL_BAUD_RATE 1500000
 

@@ -4,7 +4,7 @@
 // #define TRACE_QSOURCE3(x) x
 #define TRACE_QSOURCE3(x)
 
-#ifdef TEST
+#ifdef TEST_Q_SOURCE3
 #pragma message ("JanasCardQSource3 in test mode!")
 #endif
 
@@ -51,7 +51,7 @@ inline int32_t _limit(int32_t x, int32_t max, int32_t min)
 
 void JanasCardQSource3::_clearBuffer()
 {
-#ifndef TEST
+#ifndef TEST_Q_SOURCE3
     while(_comm->available() > 0) {
         _comm->read();
     }
@@ -61,7 +61,7 @@ void JanasCardQSource3::_clearBuffer()
 
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
-#ifndef TEST
+#ifndef TEST_Q_SOURCE3
     TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
     
     _clearBuffer();
@@ -103,7 +103,7 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 
 bool JanasCardQSource3::_queryOK(const char* query)
 {
-#ifndef TEST
+#ifndef TEST_Q_SOURCE3
     char buff[8];
     bool rc = _query(query, buff, 8);
     return (rc && (buff[0] == 'O') && (buff[1] == 'K'));
@@ -238,7 +238,7 @@ bool JanasCardQSource3::storeFreq(void)
 
 int32_t JanasCardQSource3::readFreq(void)
 {
-#ifndef TEST
+#ifndef TEST_Q_SOURCE3
     char buff[64];
 
     if (_query("#G", buff, 64))
