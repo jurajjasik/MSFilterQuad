@@ -36,7 +36,10 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority);
 class JanasCardQSource3 {
     private:
         Stream* _comm = &Serial2; // e.g. Serial1
+        
+        volatile bool _comm_busy = false;
 
+        void _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
         void _clearBuffer(void);
