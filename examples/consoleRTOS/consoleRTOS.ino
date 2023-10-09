@@ -2,7 +2,10 @@
 #include <MSFilterQuad.h>
 #include <JanasCardQSource3.h>
 
-#ifndef USE_RTOS
+#ifdef USE_RTOS
+
+#include <FreeRTOS.h>
+#include <task.h>
 
 // LED pin
 #define LED_PIN     LED_BUILTIN
@@ -30,7 +33,6 @@ void printConsoleChar();
 void initSerialTerminal();
 void initCommJanasCardQSource3(uint32_t interrupt_priority);
 
-void maintainDisplay();
 void refreshDisplay();
 
 void cmdOnSilent();
@@ -38,13 +40,20 @@ void scanI();
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+void taskTerminal(void *pvParameters);
+void taskUpdateDisplay(void *pvParameters);
+void taskQsource3Rx(void *pvParameters);
+void taskQsource3Tx(void *pvParameters);
+
+
+RTOS_Stream streamQSource3 = RTOS_Stream(&Serial2, 100);  // 100 ms timeout
 
 ///////////////////////////////////////////////////////////////////////////////
 // Mass Filter variables
 StateTuneParRecords tuneParRecordsAC[3];
 StateTuneParRecords tuneParRecordsDC[3];
 
-JanasCardQSource3 _qSource3 = JanasCardQSource3(&Serial2);
+JanasCardQSource3 _qSource3 = JanasCardQSource3(&streamQSource3);
 
 MSFilterQuad3 msfq = MSFilterQuad3(&_qSource3, tuneParRecordsAC, tuneParRecordsDC);
 
@@ -71,16 +80,9 @@ bool flagScanI = false;
 
 void setup()
 {
-    // Initialize the built-in LED
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+    
+    
 
-    // initMSFQ();
-    initSerialTerminal();
-    initCommJanasCardQSource3(5);
-
-    Serial.println("Trying to init QSource3. Press CTRL-C to break...");
-    flagTurnOn = true;
 	
 	// just to test info
 	// tuneParRecordsAC[2]._numberTuneParRecs = 3;
@@ -96,10 +98,6 @@ void setup()
 
 void loop()
 {
-    // Read from serial port and handle command callbacks
-    term.readSerial();
-    // Refresh display every second
-    maintainDisplay();
 }
 
 void printErrorCommunication()
@@ -181,19 +179,6 @@ void refreshDisplay()
     if (flagScanI)
     {
         scanI();
-    }
-}
-
-// Refresh display every REFRESH_INTERVAL
-void maintainDisplay()
-{
-    static const unsigned long REFRESH_INTERVAL = 1000; // ms
-    static unsigned long lastRefreshTime = 0;
-
-    if(millis() - lastRefreshTime >= REFRESH_INTERVAL)
-    {
-        lastRefreshTime += REFRESH_INTERVAL;
-        refreshDisplay();
     }
 }
 
@@ -410,6 +395,55 @@ void cmdCalc()
     Serial.println("OK");
 }
 
+void taskTerminal(void *pvParameters)
+{
+    initSerialTerminal();
+    Serial.println("Trying to init QSource3. Press CTRL-C to break...");
+    flagTurnOn = true;
+    
+    for(;;)
+    {
+        // Read from serial port and handle command callbacks
+        term.readSerial();
+        vTaskDelay(100);
+    }
+}
+
+
+void taskUpdateDisplay(void *pvParameters)
+{
+    // Initialize the built-in LED
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+
+    for(;;)
+    {
+        refreshDisplay();
+        vTaskDelay(1000);
+    }
+}
+
+
+void taskQsource3Rx(void *pvParameters)
+{
+    initCommJanasCardQSource3(0);
+    for(;;)
+    {
+        streamQSource3.workRx('\r');
+        vTaskDelay(1);
+    }
+}
+
+void taskQsource3Tx(void *pvParameters)
+{
+    initCommJanasCardQSource3(0);
+    for(;;)
+    {
+        streamQSource3.workTx();
+        vTaskDelay(1);
+    }
+}
+
 #else
-#error Oops! RTOS mode is not supported by this example!
+#error Oops! RTOS mode must be activated!
 #endif

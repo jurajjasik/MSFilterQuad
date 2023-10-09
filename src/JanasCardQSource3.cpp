@@ -14,7 +14,7 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority)
     Serial2.begin(1500000);
     Serial2.setInterruptPriority(interrupt_priority);
     Serial2.setTimeout(1000);
-    
+
     // See: https://forum.arduino.cc/t/arduino-due-rs485/434163/10
     // Serial2 => USART1:
     //// USART mode normal
@@ -25,18 +25,18 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority)
     //// 1 stop bit
     //// MSBF: Least Significant Bit is sent/received first.
     //// MODE9: CHRL defines character length.
-    //// 
+    ////
     USART1->US_WPMR = 0x55534100;  //Unlock the USART Mode register, just in case. (mine wasn't locked).
-    
-    // Default: USART1->US_MR = 0x8C0 = 
+
+    // Default: USART1->US_MR = 0x8C0 =
     USART1->US_MR |= (US_MR_USART_MODE_RS485 /*| US_MR_MSBF*/);  //Set mode to RS485
-    USART1->US_TTGR = 16;  // Transmitter Timeguard - number of periods 
+    USART1->US_TTGR = 16;  // Transmitter Timeguard - number of periods
                           // after transmition and before turn off the RTS signal
-    
+
     // Set 1500000 bauds/s - bug in Arduino lib
     USART1->US_MR |= US_MR_OVER;
     USART1->US_BRGR = US_BRGR_CD(7);
-    
+
     // USART1 - RTS1 -> PA14 (Arduino pin 23)
     REG_PIOA_ABSR &= ~PIO_ABSR_P14;   // Ensure that peripheral pin is switched to peripheral A
     REG_PIOA_PDR |= PIO_PDR_P14;      // Disable the GPIO and switch to the peripheral
@@ -49,6 +49,17 @@ inline int32_t _limit(int32_t x, int32_t max, int32_t min)
     return x;
 }
 
+#ifdef USE_RTOS
+JanasCardQSource3::JanasCardQSource3(RTOS_Stream *comm)
+    :_comm(comm)
+{
+}
+#else
+JanasCardQSource3::JanasCardQSource3(Stream *comm)
+    :_comm(comm)
+{
+}
+#endif
 
 void JanasCardQSource3::_clearBuffer()
 {
@@ -59,43 +70,48 @@ void JanasCardQSource3::_clearBuffer()
 #endif
 }
 
+
+#ifndef USE_RTOS
+
 void JanasCardQSource3::_write(const char* buff)
 {
     TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_write(\"%s\")\r\n", buff); )
     if (_comm_busy) return;
-    
+
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
-    
+
     _comm_busy = true;
-    
+
     _clearBuffer();
     TRACE_QSOURCE3( printf("   _write: _clearBuffer ... OK\r\n"); )
-    
+
     _comm->write(buff);
     TRACE_QSOURCE3( printf("   _write: write ... OK\r\n"); )
-    
+
     _comm_busy = false;
-    
+
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
 }
 
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
     if (_comm_busy) return false;
-    
+
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
-    
+
     _comm_busy = true;
-    
+
 #ifndef TEST_Q_SOURCE3
     TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
-    
+
     _clearBuffer();
     TRACE_QSOURCE3( printf("   _query: _clearBuffer ... OK\r\n"); )
-    _comm->print(query);
-    _comm->print('\r');
+
+    static char buff[128];
+    snprintf(buff, 128, "%s\r", query);
+    _comm->write(buff);
     TRACE_QSOURCE3( printf("   _query: print ... OK\r\n"); )
-    
+
     // workaround for ISR
     // timeOut in readBytesUntil does not work in ISR
     bool no_response = true;
@@ -109,26 +125,68 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     }
     if(no_response)
     {
-        TRACE_QSOURCE3( printf("_comm ... no response from device\r\n"); ) 
+        TRACE_QSOURCE3( printf("_comm ... no response from device\r\n"); )
         return false;
     }
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);  // problem in ISR - if device is not connected it stacks forever
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
-    
+
     TRACE_QSOURCE3(
-        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer); 
-    ) 
-    
+        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
+    )
+
     _comm_busy = false;
-    
+
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
-    
+
     if (n) return true;
     return false;
-#else
+#else  /* ifndef TEST_Q_SOURCE3 */
     return true;
-#endif
+#endif  /* ifndef TEST_Q_SOURCE3 */
 }
+
+#else  /* ifndef USE_RTOS */
+
+void JanasCardQSource3::_write(const char* buff)
+{
+    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_write(\"%s\")\r\n", buff); )
+
+    _clearBuffer();
+    TRACE_QSOURCE3( printf("   _write: _clearBuffer ... OK\r\n"); )
+
+    _comm->write(buff);
+    TRACE_QSOURCE3( printf("   _write: write ... OK\r\n"); )
+}
+
+bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
+{
+#ifndef TEST_Q_SOURCE3
+    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
+
+    _clearBuffer();
+    TRACE_QSOURCE3( printf("   _query: _clearBuffer ... OK\r\n"); )
+
+    static char buff[128];
+    snprintf(buff, 128, "%s\r", query);
+    _comm->write(buff);
+    TRACE_QSOURCE3( printf("   _query: print ... OK\r\n"); )
+
+    size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
+    if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
+
+    TRACE_QSOURCE3(
+        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
+    )
+
+    if (n) return true;
+    return false;
+#else  /* ifndef TEST_Q_SOURCE3 */
+    return true;
+#endif  /* ifndef TEST_Q_SOURCE3 */
+}
+
+#endif  /* ifndef USE_RTOS */
 
 
 bool JanasCardQSource3::_queryOK(const char* query)
@@ -205,15 +263,15 @@ bool JanasCardQSource3::writeAC(uint32_t value)
 bool JanasCardQSource3::writeVoltages(int32_t dc1, int32_t dc2, uint32_t ac)
 {
     static char buff[128];
-    
+
     dc1 = _limit(dc1, Q_SOURCE3_MAX_DC, Q_SOURCE3_MIN_DC);
     dc2 = _limit(dc2, Q_SOURCE3_MAX_DC, Q_SOURCE3_MIN_DC);
     ac = ac > Q_SOURCE3_MAX_AC ? Q_SOURCE3_MAX_AC : ac;
 
     snprintf(buff, 128, "#C %d %d %d\r", dc1, dc2, ac);
-    
+
     _write(buff);
-    
+
     return true;
 }
 

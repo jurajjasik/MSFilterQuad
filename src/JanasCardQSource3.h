@@ -11,6 +11,12 @@
 
 #include <Arduino.h>
 
+#define USE_RTOS
+
+#ifdef USE_RTOS
+#include "rtos_stream.h"
+#endif
+
 // #define TEST_Q_SOURCE3
 
 #define Q_SOURCE3_SERIAL_BAUD_RATE 1500000
@@ -35,7 +41,11 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority);
 /// </summary>
 class JanasCardQSource3 {
     private:
-        Stream* _comm = &Serial2; // e.g. Serial1
+#ifdef USE_RTOS
+        RTOS_Stream* _comm; // e.g. Serial2
+#else
+        Stream* _comm;
+#endif
         
         volatile bool _comm_busy = false;
 
@@ -48,7 +58,11 @@ class JanasCardQSource3 {
         /// <summary>
         /// Constructor.
         /// </summary>
-        // JanasCardQSource3(void);
+#ifdef USE_RTOS
+        JanasCardQSource3(RTOS_Stream* comm);
+#else
+        JanasCardQSource3(Stream* comm);
+#endif
 
         /// <summary>
         /// Communication test.
