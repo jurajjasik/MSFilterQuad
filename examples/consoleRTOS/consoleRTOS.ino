@@ -80,7 +80,7 @@ bool flagScanI = false;
 
 void setup()
 {
-    
+    xTaskCreate(blink, (const portCHAR *)"blink", 128, NULL, 2, NULL);
     
 
 	
