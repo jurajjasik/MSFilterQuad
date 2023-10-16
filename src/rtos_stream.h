@@ -13,14 +13,15 @@ private:
     Stream* _stream;
     TickType_t _timeout;
     
-    MessageBufferHandle_t _xMessageBufferTx;
-    MessageBufferHandle_t _xMessageBufferRx;
+    MessageBufferHandle_t _xMessageBufferTx = NULL;
+    MessageBufferHandle_t _xMessageBufferRx = NULL;
     
     char _rxBuffer[RX_BUFFER_LENGTH];
     size_t _rxIdx = 0;
     
 public:
     RTOS_Stream(Stream* stream, int timeout);
+    bool init();
     size_t write(const char* str);
     int available();
     int read();
