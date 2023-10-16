@@ -3,7 +3,8 @@
 
 
 // #define TRACE_QSOURCE3(x) x
-#define TRACE_QSOURCE3(x)
+#define TRACE_QSOURCE3(x_) printf("%d ms -> JanasCardQSource3: ", millis()); x_
+// #define TRACE_QSOURCE3(x)
 
 #ifdef TEST_Q_SOURCE3
 #pragma message ("JanasCardQSource3 in test mode!")
@@ -75,7 +76,7 @@ void JanasCardQSource3::_clearBuffer()
 
 void JanasCardQSource3::_write(const char* buff)
 {
-    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_write(\"%s\")\r\n", buff); )
+    TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
     if (_comm_busy) return;
 
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
@@ -83,10 +84,10 @@ void JanasCardQSource3::_write(const char* buff)
     _comm_busy = true;
 
     _clearBuffer();
-    TRACE_QSOURCE3( printf("   _write: _clearBuffer ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
 
     _comm->write(buff);
-    TRACE_QSOURCE3( printf("   _write: write ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("...write ... OK\r\n"); )
 
     _comm_busy = false;
 
@@ -102,15 +103,15 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     _comm_busy = true;
 
 #ifndef TEST_Q_SOURCE3
-    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
+    TRACE_QSOURCE3( printf("_query(\"%s\")\r\n", query); )
 
     _clearBuffer();
-    TRACE_QSOURCE3( printf("   _query: _clearBuffer ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
 
     static char buff[128];
     snprintf(buff, 128, "%s\r", query);
     _comm->write(buff);
-    TRACE_QSOURCE3( printf("   _query: print ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("...print ... OK\r\n"); )
 
     // workaround for ISR
     // timeOut in readBytesUntil does not work in ISR
@@ -125,14 +126,14 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     }
     if(no_response)
     {
-        TRACE_QSOURCE3( printf("_comm ... no response from device\r\n"); )
+        TRACE_QSOURCE3( printf("... no response from device\r\n"); )
         return false;
     }
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);  // problem in ISR - if device is not connected it stacks forever
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
 
     TRACE_QSOURCE3(
-        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
+        printf("..._comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
     )
 
     _comm_busy = false;
@@ -150,33 +151,33 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 
 void JanasCardQSource3::_write(const char* buff)
 {
-    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_write(\"%s\")\r\n", buff); )
+    TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
 
     _clearBuffer();
-    TRACE_QSOURCE3( printf("   _write: _clearBuffer ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
 
     _comm->write(buff);
-    TRACE_QSOURCE3( printf("   _write: write ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("...write ... OK\r\n"); )
 }
 
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
 #ifndef TEST_Q_SOURCE3
-    TRACE_QSOURCE3( printf("\r\n=> JanasCardQSource3::_query(\"%s\")\r\n", query); )
+    TRACE_QSOURCE3( printf("_query(\"%s\")\r\n", query); )
 
     _clearBuffer();
-    TRACE_QSOURCE3( printf("   _query: _clearBuffer ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
 
     static char buff[128];
     snprintf(buff, 128, "%s\r", query);
     _comm->write(buff);
-    TRACE_QSOURCE3( printf("   _query: print ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("...print ... OK\r\n"); )
 
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
 
     TRACE_QSOURCE3(
-        printf("_comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
+        printf("... %d bytes red, buffer = \"%s\"\r\n", n, buffer);
     )
 
     if (n) return true;
@@ -192,9 +193,20 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 bool JanasCardQSource3::_queryOK(const char* query)
 {
 #ifndef TEST_Q_SOURCE3
+    TRACE_QSOURCE3( printf("_queryOK(\"%s\")\r\n", query); )
     char buff[8];
     bool rc = _query(query, buff, 8);
-    return (rc && (buff[0] == 'O') && (buff[1] == 'K'));
+    if (rc)
+    {
+        if ((buff[0] == 'O') && (buff[1] == 'K'))
+        {
+            TRACE_QSOURCE3( printf("... OK\r\n"); )
+            return true;
+        }
+    }
+    
+    TRACE_QSOURCE3( printf("... ERROR\r\n"); )
+    return false;
 #else
     return true;
 #endif
