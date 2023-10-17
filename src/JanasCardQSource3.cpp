@@ -72,47 +72,47 @@ void JanasCardQSource3::_clearBuffer()
 }
 
 
-#ifndef USE_RTOS
-
 void JanasCardQSource3::_write(const char* buff)
 {
     TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
+
+#ifndef USE_RTOS    
     if (_comm_busy) return;
-
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
-
     _comm_busy = true;
+#endif  /* ifndef USE_RTOS */
 
     _clearBuffer();
-    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("..._clearBuffer() pass\r\n"); )
 
     _comm->write(buff);
-    TRACE_QSOURCE3( printf("...write ... OK\r\n"); )
+    TRACE_QSOURCE3( printf("... _comm->write(buff) pass\r\n"); )
 
+#ifndef USE_RTOS 
     _comm_busy = false;
-
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
+#endif  /* ifndef USE_RTOS */
 }
+
 
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
-    if (_comm_busy) return false;
-
-    NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
-
-    _comm_busy = true;
-
 #ifndef TEST_Q_SOURCE3
+
     TRACE_QSOURCE3( printf("_query(\"%s\")\r\n", query); )
 
-    _clearBuffer();
-    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
+#ifndef USE_RTOS
+    if (_comm_busy) return false;
+    NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
+    _comm_busy = true;
+#endif
 
     static char buff[128];
     snprintf(buff, 128, "%s\r", query);
-    _comm->write(buff);
-    TRACE_QSOURCE3( printf("...print ... OK\r\n"); )
+    _write(buff);
+    TRACE_QSOURCE3( printf("... _write() pass\r\n"); )
 
+#ifndef USE_RTOS
     // workaround for ISR
     // timeOut in readBytesUntil does not work in ISR
     bool no_response = true;
@@ -129,65 +129,28 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
         TRACE_QSOURCE3( printf("... no response from device\r\n"); )
         return false;
     }
-    size_t n = _comm->readBytesUntil('\r', buffer, buff_len);  // problem in ISR - if device is not connected it stacks forever
-    if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
-
-    TRACE_QSOURCE3(
-        printf("..._comm->readBytesUntil() -> %d, buffer = \"%s\"\r\n", n, buffer);
-    )
-
-    _comm_busy = false;
-
-    NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
-
-    if (n) return true;
-    return false;
-#else  /* ifndef TEST_Q_SOURCE3 */
-    return true;
-#endif  /* ifndef TEST_Q_SOURCE3 */
-}
-
-#else  /* ifndef USE_RTOS */
-
-void JanasCardQSource3::_write(const char* buff)
-{
-    TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
-
-    _clearBuffer();
-    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
-
-    _comm->write(buff);
-    TRACE_QSOURCE3( printf("...write ... OK\r\n"); )
-}
-
-bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
-{
-#ifndef TEST_Q_SOURCE3
-    TRACE_QSOURCE3( printf("_query(\"%s\")\r\n", query); )
-
-    _clearBuffer();
-    TRACE_QSOURCE3( printf("..._clearBuffer ... OK\r\n"); )
-
-    static char buff[128];
-    snprintf(buff, 128, "%s\r", query);
-    _comm->write(buff);
-    TRACE_QSOURCE3( printf("...print ... OK\r\n"); )
-
+#endif
+    
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
 
     TRACE_QSOURCE3(
-        printf("... %d bytes red, buffer = \"%s\"\r\n", n, buffer);
+        printf("...readBytesUntil(): %d bytes read, buffer = \"%s\"\r\n", n, buffer);
     )
 
-    if (n) return true;
-    return false;
+#ifndef USE_RTOS
+    _comm_busy = false;
+    NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
+#endif
+
+    return (n > 0);
+    
 #else  /* ifndef TEST_Q_SOURCE3 */
+
     return true;
+    
 #endif  /* ifndef TEST_Q_SOURCE3 */
 }
-
-#endif  /* ifndef USE_RTOS */
 
 
 bool JanasCardQSource3::_queryOK(const char* query)
