@@ -1,7 +1,7 @@
 #include "MSFilterQuad.h"
 
-// #define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
-#define TRACE_MSFQ(x_)
+#define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
+// #define TRACE_MSFQ(x_)
 
 
 void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) {
@@ -300,33 +300,71 @@ MSFilterQuad3::MSFilterQuad3(
 
 bool MSFilterQuad3::init(float r0)
 {
+    TRACE_MSFQ( printf("init(r0=%d)\r\n", static_cast<int>(r0 * 1e6)); )
     int delay_ms = 10;
     int delay_ms2 = 10;
 
     // Activate RS485 mode
-    if (!_device->writeRSMode(1)) return false;
+    TRACE_MSFQ( printf("... activate RS485 mode...\r\n"); )
+    if (!_device->writeRSMode(1))
+    {
+        TRACE_MSFQ( printf("... ERROR\r\n"); )
+        return false;
+    }
     delay(delay_ms);
+    
     //turn off RF and DC
-    if (!_device->writeVoltages(0, 0, 0)) return false;
+    TRACE_MSFQ( printf("... turn off RF and DC...\r\n"); )
+    if (!_device->writeVoltages(0, 0, 0))
+    {
+        TRACE_MSFQ( printf("... ERROR\r\n"); )
+        return false;
+    }
     delay(delay_ms);
 
     // read frequencies of all 3 ranges stored in the device n
     // and calculate RF calibration factor
     for(int i = 0; i < 3; ++i)
     {
-        if (!_device->writeFreqRange(i)) return false;
+        TRACE_MSFQ( printf("... set freq range %d ...\r\n", i); )
+        if (!_device->writeFreqRange(i))
+        {
+            TRACE_MSFQ( printf("... ERROR\r\n"); )
+            return false;
+        }
         delay(delay_ms2);
+        
+        TRACE_MSFQ( printf("... [%d]: read stored freq ...\r\n", i); )
         int32_t f = _device->readFreq();
         delay(delay_ms);
-        if (f < 0) return false;
+        
+        if (f < 0)
+        {
+            TRACE_MSFQ( printf("... ERROR\r\n"); )
+            return false;
+        }
+        TRACE_MSFQ( printf("... [%d]: stored freq = %d\r\n", i, f); )
+        
+        TRACE_MSFQ( printf("... [%d]: initRFFactor ...\r\n", i); )
         _msfq[i].initRFFactor(r0, (float)f * 100.0);
+        
+        TRACE_MSFQ( printf("... [%d]: setVoltages(0, 0, 0) ...\r\n", i); )
         _msfq[i].setVoltages(0, 0, 0);
+        
         delay(delay_ms);
-        if (!_msfq[i].isConnected()) return false;
+        
+        TRACE_MSFQ( printf("... [%d]: check if connected ...\r\n", i); )
+        if (!_msfq[i].isConnected())
+        {
+            TRACE_MSFQ( printf("... ERROR\r\n"); )
+            return false;
+        }
+        TRACE_MSFQ( printf("... [%d]: OK\r\n", i); )
     }
 
     _freqRange = 2;
-
+    
+    TRACE_MSFQ( printf("... OK\r\n"); )
     return true;
 }
 
