@@ -19,7 +19,7 @@ bool RTOS_Stream::init()
         TRACE_RTOS_STREAM( printf("... _xMessageBufferTx=%p\r\n", _xMessageBufferTx); )
     if (_xMessageBufferTx == NULL) return false;
     }
-    
+
     if (_xMessageBufferRx == NULL)
     {
         TRACE_RTOS_STREAM( printf("... create _xMessageBufferRx...\r\n"); )
@@ -27,7 +27,7 @@ bool RTOS_Stream::init()
         if (_xMessageBufferRx == NULL) return false;
         TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p\r\n", _xMessageBufferTx); )
     }
-    
+
     return true;
 }
 
@@ -35,10 +35,10 @@ size_t RTOS_Stream::write(const char* str)
 {
     TRACE_RTOS_STREAM( printf("write(\"%s\")\r\n", str); )
     if (str == NULL) return 0;
-    
+
     TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p\r\n", _xMessageBufferTx); )
     if (_xMessageBufferTx == NULL) return 0;
-    
+
     size_t xBytesSent;
     if( xPortIsInsideInterrupt() )
     {
@@ -49,9 +49,9 @@ size_t RTOS_Stream::write(const char* str)
                                                 ( void * ) str,
                                                 strlen( str ),
                                                 &xHigherPriorityTaskWoken );
-        
+
         TRACE_RTOS_STREAM( printf("... %u bytes sent from interrupt.\r\n", xBytesSent); )
-        
+
         portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
         return xBytesSent;
     }
@@ -73,7 +73,7 @@ int RTOS_Stream::available()
 int RTOS_Stream::read()
 {
     if (_xMessageBufferRx == NULL) return 0;
-    
+
     uint8_t ucRxData[ RX_BUFFER_LENGTH ];
     size_t xReceivedBytes;
 
@@ -97,10 +97,10 @@ int RTOS_Stream::read()
 size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length)
 {
     TRACE_RTOS_STREAM( printf("readBytesUntil(terminator=0x%02x, buffer=%p, length=%u)\r\n", reinterpret_cast<uint32_t*>(terminator), static_cast<void*>(buffer), length); )
-    
+
     TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p.\r\n", _xMessageBufferTx); )
     if (_xMessageBufferRx == NULL) return 0;
-    
+
     if(xMessageBufferIsEmpty( _xMessageBufferRx ) == pdTRUE)
     {
         TRACE_RTOS_STREAM( printf("... _xMessageBufferRx is empty.\r\n"); )
@@ -114,7 +114,7 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
 
     if( xPortIsInsideInterrupt() )
     {
-        
+
         xReceivedBytes = xMessageBufferReceiveFromISR( _xMessageBufferRx,
                                                        ( void * ) ucRxData,
                                                        sizeof( ucRxData ),
@@ -129,13 +129,13 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
                                                 _timeout );
         TRACE_RTOS_STREAM( printf("... %u bytes received.\r\n", xReceivedBytes); )
     }
-    
+
     for(idx = 0; (idx < length) && (idx < xReceivedBytes) && (idx < RX_BUFFER_LENGTH); ++idx)
     {
         if( terminator == ucRxData[idx] ) break;
         buffer[idx] = ucRxData[idx];
     }
-    
+
     if( xPortIsInsideInterrupt() ) portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 
     TRACE_RTOS_STREAM( printf("... %u bytes copied into the buffer.\r\n", idx); )
@@ -145,16 +145,16 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
 void RTOS_Stream::workTx()
 {
     if (_xMessageBufferTx == NULL) return;
-    
+
     uint8_t ucRxData[ RX_BUFFER_LENGTH ];
     size_t xReceivedBytes;
-    
+
     // wait indefinitely (without timing out), provided INCLUDE_vTaskSuspend is set to 1
     xReceivedBytes = xMessageBufferReceive( _xMessageBufferTx,
                                             ( void * ) ucRxData,
                                             sizeof( ucRxData ),
-                                            portMAX_DELAY  );  
-    
+                                            portMAX_DELAY  );
+
     _stream->write(( char * )ucRxData);
 }
 
@@ -165,22 +165,22 @@ void RTOS_Stream::workRx(char terminator)
     {
         char c = _stream->read();
         _rxBuffer[_rxIdx++] = c;
-        if(c == terminator) 
+        if(c == terminator)
         {
             isTerminator = true;
             break;
         }
     }
-    
+
     if(isTerminator || (_rxIdx == RX_BUFFER_LENGTH))
     {
         if (_xMessageBufferRx != NULL)
         {
-            xMessageBufferSend( 
+            xMessageBufferSend(
                 _xMessageBufferRx,
                 ( void * ) _rxBuffer,
                 _rxIdx,
-                _timeout 
+                _timeout
             );
         }
         _rxIdx = 0;

@@ -24,7 +24,7 @@ static struct StateTuneParRecords {
 class MSFilterQuad
 {
     friend class MSFilterQuad3;
-    
+
 private:
     float _rfFactor;
     float _dcFactor;
@@ -37,20 +37,20 @@ private:
     float _rfAmp = 0.0;
     bool _polarity = true;
     bool _dcOn = true;
-    
+
     float _MAX_MZ = 0.0;
 
     JanasCardQSource3* _device;
-    
+
     StateTuneParRecords* _calibPntsRF;
     StateTuneParRecords* _calibPntsDC;
-    
+
     CubicSplineInterp* _splineRF;
     CubicSplineInterp* _splineDC;
 
 public:
     MSFilterQuad() = default;
-    
+
     /// <summary>
     /// Constructor.
     /// </summary>
@@ -62,17 +62,17 @@ public:
         StateTuneParRecords* calibPntsRF,
         StateTuneParRecords* calibPntsDC
     );
-    
+
     // Service methods
 
         /// <summary>
-    /// Initialize RF calibration according to the frequency and r0. 
+    /// Initialize RF calibration according to the frequency and r0.
     /// Must be called before the first use of setMZ() or setDCOn().
     /// </summary>
     /// <param name="frequency">- frequency of the quadrupole</param>
     /// <param name="r0">- characteristic radius of the quadrupole</param>
     void initRFFactor(float r0, float frequency);
-    
+
     /// <summary>
     /// Get boolean flag representing connection status.
     /// </summary>
@@ -81,7 +81,7 @@ public:
     bool isConnected(void) const { return _connected; }
 
     /// <summary>
-    /// Sets DC voltage of quadrupole rods 1. 
+    /// Sets DC voltage of quadrupole rods 1.
     /// </summary>
     /// <param name="v">- DC voltage in Volts</param>
     /// <returns>true if last communication was successfull</returns>
@@ -109,10 +109,10 @@ public:
     float getDC2(void) const { return _dc2; }
 
     /// <summary>
-    /// Sets DC differential voltage of the quadrupole rods referenced to 
+    /// Sets DC differential voltage of the quadrupole rods referenced to
     /// the offset of the quadrupole (quadrupole field axis).
     /// Keeps the offset.
-    /// 
+    ///
     /// DC1 = offset + v,
     /// DC2 = offset - v.
     /// </summary>
@@ -121,7 +121,7 @@ public:
     bool setDCDiff(float v);
 
     /// <summary>
-    /// Gets DC differential voltage of the quadrupole rods referenced to 
+    /// Gets DC differential voltage of the quadrupole rods referenced to
     /// the offset of the quadrupole (quadrupole field axis).
     /// </summary>
     /// <param name=""></param>
@@ -152,7 +152,7 @@ public:
     bool setVoltages(float rf, float dc1, float dc2);
 
     /// <summary>
-    /// Sets DC offset (field axis of the quadrupole). 
+    /// Sets DC offset (field axis of the quadrupole).
     /// Keeps DC difference.
     /// </summary>
     /// <param name="v">- DC offset value in Volts.</param>
@@ -179,9 +179,9 @@ public:
     /// <param name=""></param>
     /// <returns>true for positive and false for negative polarity</returns>
     bool isRodPolarityPos(void) const { return _polarity; }
-    
+
     // mass filter methods
-    
+
     /// <summary>
     /// Sets DC difference and RF amplitude. Keeps DC offset.
     /// The DC offset is set only when internal flag _dcOn is set. See <see cref="setDCOn"></see>.
@@ -207,7 +207,7 @@ public:
     /// </summary>
     /// <param name=""></param>
     void initSplineDC(void);
-    
+
     /// <summary>
     /// Sets m/z.
     /// </summary>
@@ -220,13 +220,13 @@ public:
     /// </summary>
     /// <returns></returns>
     float getMZ() const { return _mz; }
-    
+
     /// <returns>true if last communication was successfull</returns>
     bool resetMZ(void);
 
     /// <summary>
     /// Turns on/off DC difference.
-        /// It activates a mass filter mode. The mz is set according to internal _mz value. 
+        /// It activates a mass filter mode. The mz is set according to internal _mz value.
     /// </summary>
     /// <param name="v">- true - DC on, quadrupole in mass filter mode; false - DC off,  quadrupole in transmition mode.</param>
     /// <returns>true if last communication was successfull</returns>
@@ -238,15 +238,15 @@ public:
     /// <param name=""></param>
     /// <returns>true when DC on, false otherwise.</returns>
     bool isDCOn(void) const { return _dcOn; }
-    
+
     float calcRF(float);
-    
+
     float calcDC(float);
-    
+
     float calcMaxMz(void) const;
-    
+
     const StateTuneParRecords* getCalibPntsRF(void) const { return _calibPntsRF; }
-    
+
     const StateTuneParRecords* getCalibPntsDC(void) const { return _calibPntsDC; }
 };
 
@@ -272,30 +272,30 @@ public:
     );
 
     /// <summary>
-    /// Initialize basic RF calibration of quadrupole MS filters using r0 and RF frequencies 
+    /// Initialize basic RF calibration of quadrupole MS filters using r0 and RF frequencies
     /// stored in JanasCardQSource3 hardware device.
     /// </summary>
     /// <param name="r0">- characteristic radius of the quadrupole</param>
     /// <returns>true if succeeded</returns>
     bool init(float r0);
-    
+
     /// <summary>
     /// Changes resonant frequency and corresponding mass measurement range of the
     /// quadrupole MS filter.
     /// </summary>
-    /// <param name="freqRange">- has range 0-2, where 0 is the highest range typically 1050 kHz, 
+    /// <param name="freqRange">- has range 0-2, where 0 is the highest range typically 1050 kHz,
     /// 1 – 480 kHz, 2 – 240 kHz.</param>
     /// <returns>true if succeeded</returns>
     bool setFreqRangeIdx(int32_t freqRange);
-    
+
     int32_t getActualFreqRangeIdx(void) const { return _freqRange; }
-    
+
     /// <summary>
     /// Gets actual quadrupole MS filter.
     /// </summary>
     /// <returns>pointer to <see cref="MSFilterQuad"></see></returns>
     MSFilterQuad* getActualMSFilter (void) { return &(_msfq[_freqRange]); }
-    
+
     MSFilterQuad* getMSFilter (int i) { return &(_msfq[i]); }
 };
 

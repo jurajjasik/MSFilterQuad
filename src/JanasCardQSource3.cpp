@@ -76,7 +76,7 @@ void JanasCardQSource3::_write(const char* buff)
 {
     TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
 
-#ifndef USE_RTOS    
+#ifndef USE_RTOS
     if (_comm_busy) return;
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
     _comm_busy = true;
@@ -88,7 +88,7 @@ void JanasCardQSource3::_write(const char* buff)
     _comm->write(buff);
     TRACE_QSOURCE3( printf("... _comm->write(buff) pass\r\n"); )
 
-#ifndef USE_RTOS 
+#ifndef USE_RTOS
     _comm_busy = false;
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
 #endif  /* ifndef USE_RTOS */
@@ -130,7 +130,7 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
         return false;
     }
 #endif
-    
+
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
 
@@ -144,11 +144,11 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 #endif
 
     return (n > 0);
-    
+
 #else  /* ifndef TEST_Q_SOURCE3 */
 
     return true;
-    
+
 #endif  /* ifndef TEST_Q_SOURCE3 */
 }
 
@@ -167,7 +167,7 @@ bool JanasCardQSource3::_queryOK(const char* query)
             return true;
         }
     }
-    
+
     TRACE_QSOURCE3( printf("... ERROR\r\n"); )
     return false;
 #else

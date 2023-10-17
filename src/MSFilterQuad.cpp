@@ -121,7 +121,7 @@ bool MSFilterQuad::setDC1(float v)
         v = MAX_DC;
     }
     _connected = _device->writeDC(1, (int32_t)(v * 1000));  // convert V to mV
-    if (_connected) 
+    if (_connected)
     {
         _dc1 = v;
         return true;
@@ -142,7 +142,7 @@ bool MSFilterQuad::setDC2(float v)
         v = MAX_DC;
     }
     _connected = _device->writeDC(2, (int32_t)(v * 1000));  // convert V to mV
-    if (_connected) 
+    if (_connected)
     {
         _dc2 = v;
         return true;
@@ -177,7 +177,7 @@ bool MSFilterQuad::setMZ(float mz) {
     }
     float V = calcRF(mz); // RF amplitude
     float U = calcDC(mz); // DC difference
-    if (setUV(U, V)) 
+    if (setUV(U, V))
     {
         _mz = mz;
         return true;
@@ -206,7 +206,7 @@ bool MSFilterQuad::setRFAmp(float v)
         v = MAX_RF_AMP;
     }
     _connected = _device->writeAC((uint32_t)(v * 2000));  // convert V(0-p) to mV(p-p)
-    if (_connected) 
+    if (_connected)
     {
         _rfAmp = v;
         return true;
@@ -312,7 +312,7 @@ bool MSFilterQuad3::init(float r0)
         return false;
     }
     delay(delay_ms);
-    
+
     //turn off RF and DC
     TRACE_MSFQ( printf("... turn off RF and DC...\r\n"); )
     if (!_device->writeVoltages(0, 0, 0))
@@ -333,26 +333,26 @@ bool MSFilterQuad3::init(float r0)
             return false;
         }
         delay(delay_ms2);
-        
+
         TRACE_MSFQ( printf("... [%d]: read stored freq ...\r\n", i); )
         int32_t f = _device->readFreq();
         delay(delay_ms);
-        
+
         if (f < 0)
         {
             TRACE_MSFQ( printf("... ERROR\r\n"); )
             return false;
         }
         TRACE_MSFQ( printf("... [%d]: stored freq = %d\r\n", i, f); )
-        
+
         TRACE_MSFQ( printf("... [%d]: initRFFactor ...\r\n", i); )
         _msfq[i].initRFFactor(r0, (float)f * 100.0);
-        
+
         TRACE_MSFQ( printf("... [%d]: setVoltages(0, 0, 0) ...\r\n", i); )
         _msfq[i].setVoltages(0, 0, 0);
-        
+
         delay(delay_ms);
-        
+
         TRACE_MSFQ( printf("... [%d]: check if connected ...\r\n", i); )
         if (!_msfq[i].isConnected())
         {
@@ -363,7 +363,7 @@ bool MSFilterQuad3::init(float r0)
     }
 
     _freqRange = 2;
-    
+
     TRACE_MSFQ( printf("... OK\r\n"); )
     return true;
 }

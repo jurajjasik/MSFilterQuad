@@ -1,11 +1,11 @@
 /*****************************************************************//**
  * \file   JanasCardQSource3.h
  * \brief  Arduino library for communication with QSsource3 (JanasCard).
- * 
+ *
  * \author jasik
  * \date   December 2022
  *********************************************************************/
- 
+
 #ifndef JanasCardQSource3_H_
 #define JanasCardQSource3_H_
 
@@ -31,7 +31,7 @@ void initCommJanasCardQSource3(uint32_t interrupt_priority);
 
 /// <summary>
 /// A low-level class for communication with QSsource3 (JanasCard).
-/// 
+///
 /// RS422/485 uses these parameters: speed 1 MBaud, 8 bits, 1 stop bit, no parity. An implicit setting is
 /// full - duplex ie.RS422, it is possible to switch to half - duplex – RS485 via a software command.
 /// Connection of Canon 9
@@ -46,14 +46,14 @@ class JanasCardQSource3 {
 #else
         Stream* _comm;
 #endif
-        
+
         volatile bool _comm_busy = false;
 
         void _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
         void _clearBuffer(void);
-    
+
     public:
         /// <summary>
         /// Constructor.
@@ -80,7 +80,7 @@ class JanasCardQSource3 {
 
         /// <summary>
         /// Switches between RS485/422.
-        /// 
+        ///
         /// QSource3 listens and switches to transmit mode only for sending
         /// answers. Default state after power-up is RS422.
         /// </summary>
@@ -94,7 +94,7 @@ class JanasCardQSource3 {
         /// </summary>
         /// <param name="output"> - 1 or 2</param>
         /// <param name="value"> - DC voltage in mV. The
-        /// mentioned resolution is only numerical representation, 
+        /// mentioned resolution is only numerical representation,
         /// the used DA converters have resolution 16
         /// bits = +-32000 LSB, so the real resolution is 2.3 mV.</param>
         /// <returns>true if succeeded</returns>
@@ -103,7 +103,7 @@ class JanasCardQSource3 {
         /// <summary>
         /// Sets AC voltage.
         /// </summary>
-        /// <param name="value">- peak to peak value in mV, range is 0 to 650000, 
+        /// <param name="value">- peak to peak value in mV, range is 0 to 650000,
         /// and corresponding AC voltage is 0 to 650.000 Vpp on the output against ground.
         /// The real resolution is again 16 bits, so LSB is 9.4 mV.</param>
         /// <returns>true if succeeded</returns>
@@ -122,7 +122,7 @@ class JanasCardQSource3 {
         /// Changes resonant frequency and corresponding mass measurement range of the
         /// quadrupole.
         /// </summary>
-        /// <param name="range">- has range 0-2, where 0 is the highest range typically 1050 kHz, 
+        /// <param name="range">- has range 0-2, where 0 is the highest range typically 1050 kHz,
         /// 1 – 480 kHz, 2 – 240 kHz.</param>
         /// <returns>true if succeeded</returns>
         bool writeFreqRange(uint32_t range);
@@ -143,7 +143,7 @@ class JanasCardQSource3 {
         bool storeFreq(void);
 
         /// <summary>
-        /// Reads actual frequency at the actual range given by the command <see cref="writeFreqRange()"/>. 
+        /// Reads actual frequency at the actual range given by the command <see cref="writeFreqRange()"/>.
         /// </summary>
         /// <param name=""></param>
         /// <returns>frequency in hundreds of Hz or -1 in case of communication error.</returns>
@@ -153,9 +153,9 @@ class JanasCardQSource3 {
         /// Reads value of the excitation current.
         /// </summary>
         /// <param name=""></param>
-        /// <returns>value of current. A valid value is in the range 0 to 3300. 
+        /// <returns>value of current. A valid value is in the range 0 to 3300.
         /// The real value of the excitation current in mA is I = val / 10.
-        /// If the current is out of range, val is 9999. 
+        /// If the current is out of range, val is 9999.
         /// In case of communication error -1 is returned.</returns>
         int32_t readCurrent(void);
 };
