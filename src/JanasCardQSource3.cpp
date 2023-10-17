@@ -2,9 +2,8 @@
 #include <stdio.h>
 
 
-// #define TRACE_QSOURCE3(x) x
 #define TRACE_QSOURCE3(x_) printf("%d ms -> JanasCardQSource3: ", millis()); x_
-// #define TRACE_QSOURCE3(x)
+// #define TRACE_QSOURCE3(x_)
 
 #ifdef TEST_Q_SOURCE3
 #pragma message ("JanasCardQSource3 in test mode!")
@@ -72,7 +71,7 @@ void JanasCardQSource3::_clearBuffer()
 }
 
 
-void JanasCardQSource3::_write(const char* buff)
+size_t JanasCardQSource3::_write(const char* buff)
 {
     TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
 
@@ -85,13 +84,15 @@ void JanasCardQSource3::_write(const char* buff)
     _clearBuffer();
     TRACE_QSOURCE3( printf("..._clearBuffer() pass\r\n"); )
 
-    _comm->write(buff);
-    TRACE_QSOURCE3( printf("... _comm->write(buff) pass\r\n"); )
+    size_t bytesSent = _comm->write(buff);
+    TRACE_QSOURCE3( printf("... _comm->write(buff): %d bytes sent\r\n", bytesSent); )
 
 #ifndef USE_RTOS
     _comm_busy = false;
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
 #endif  /* ifndef USE_RTOS */
+
+    return bytesSent;
 }
 
 
@@ -107,9 +108,14 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     _comm_busy = true;
 #endif
 
-    static char buff[128];
-    snprintf(buff, 128, "%s\r", query);
-    _write(buff);
+    char buff[Q_SOURCE3_QUERY_BUFFER_SIZE];
+    snprintf(buff, Q_SOURCE3_QUERY_BUFFER_SIZE, "%s\r", query);
+    size_t bytesSent = _write(buff);
+    if(strlen(buff) != bytesSent)
+    {
+        TRACE_QSOURCE3( printf("... _write() ERROR\r\n"); )
+        return false;
+    }
     TRACE_QSOURCE3( printf("... _write() pass\r\n"); )
 
 #ifndef USE_RTOS

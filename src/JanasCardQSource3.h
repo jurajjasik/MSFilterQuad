@@ -19,6 +19,9 @@
 
 // #define TEST_Q_SOURCE3
 
+#define Q_SOURCE3_QUERY_BUFFER_SIZE 128
+#define Q_SOURCE3_MIN_STACK_SIZE (Q_SOURCE3_QUERY_BUFFER_SIZE + 128)
+
 #define Q_SOURCE3_SERIAL_BAUD_RATE 1500000
 
 #define Q_SOURCE3_MAX_DC 75000
@@ -49,7 +52,7 @@ class JanasCardQSource3 {
 
         volatile bool _comm_busy = false;
 
-        void _write(const char* buff);
+        size_t _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
         void _clearBuffer(void);
