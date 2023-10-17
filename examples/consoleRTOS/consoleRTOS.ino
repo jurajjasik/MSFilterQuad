@@ -2,6 +2,9 @@
 #include <MSFilterQuad.h>
 #include <JanasCardQSource3.h>
 
+#define TRACE_ME(x_) printf("%d ms -> consoleRTOS: ", millis()); x_
+// #define TRACE_ME(x_)
+
 #ifdef USE_RTOS
 
 #include <FreeRTOS.h>
@@ -40,13 +43,23 @@ void scanI();
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+// Low priority numbers denote low priority tasks.
+const int PRIORITY_TASK_QSOURCE3_RX = 4;
+const int PRIORITY_TASK_QSOURCE3_TX = 3;
+const int PRIORITY_TASK_TERMINAL = 1;
+const int PRIORITY_TASK_UPDATE_DISPLAY = 2;
+
+const size_t STACK_SIZE_TASK_TERMINAL = 512;
+
+static_assert(STACK_SIZE_TASK_TERMINAL >= Q_SOURCE3_MIN_STACK_SIZE, "STACK_SIZE_TASK_TERMINAL too small");
+
 void taskTerminal(void *pvParameters);
 void taskUpdateDisplay(void *pvParameters);
 void taskQsource3Rx(void *pvParameters);
 void taskQsource3Tx(void *pvParameters);
 
 
-RTOS_Stream streamQSource3 = RTOS_Stream(&Serial2, 100);  // 100 ms timeout
+static RTOS_Stream streamQSource3 = RTOS_Stream(&Serial2, 100);  // 100 ms timeout
 
 ///////////////////////////////////////////////////////////////////////////////
 // Mass Filter variables
@@ -80,20 +93,49 @@ bool flagScanI = false;
 
 void setup()
 {
-    xTaskCreate(blink, (const portCHAR *)"blink", 128, NULL, 2, NULL);
+    Serial.begin(115200);
+    Serial.println("Test");
     
+    xTaskCreate(
+        taskTerminal,  // pvTaskCode  
+        (const portCHAR *)"terminal",  // pcName  
+        STACK_SIZE_TASK_TERMINAL,  // usStackDepth
+        NULL,  // pvParameters
+        PRIORITY_TASK_TERMINAL,  // uxPriority
+        NULL  // pxCreatedTask
+    );
+    
+    // xTaskCreate(
+        // taskUpdateDisplay,  // pvTaskCode  
+        // (const portCHAR *)"update display",  // pcName  
+        // 128,  // usStackDepth
+        // NULL,  // pvParameters
+        // PRIORITY_TASK_UPDATE_DISPLAY,  // uxPriority
+        // NULL  // pxCreatedTask
+    // );    
 
-	
-	// just to test info
-	// tuneParRecordsAC[2]._numberTuneParRecs = 3;
-	// tuneParRecordsAC[2]._tuneParMZ[0] = 0;
-	// tuneParRecordsAC[2]._tuneParMZ[1] = 10;
-	// tuneParRecordsAC[2]._tuneParMZ[2] = 100;
-	// tuneParRecordsAC[2]._tuneParVal[0] = -0.002;
-	// tuneParRecordsAC[2]._tuneParVal[1] = 0.0123;
-	// tuneParRecordsAC[2]._tuneParVal[2] = -0.09;
-	// msfq.getMSFilter(2)->initSplineRF();
-	
+    // xTaskCreate(
+        // taskQsource3Rx,  // pvTaskCode  
+        // (const portCHAR *)"QSource3 Rx",  // pcName  
+        // 128,  // usStackDepth
+        // NULL,  // pvParameters
+        // PRIORITY_TASK_QSOURCE3_RX,  // uxPriority
+        // NULL  // pxCreatedTask
+    // );
+
+    // xTaskCreate(
+        // taskQsource3Tx,  // pvTaskCode  
+        // (const portCHAR *)"QSource3 Rx",  // pcName  
+        // 128,  // usStackDepth
+        // NULL,  // pvParameters
+        // PRIORITY_TASK_QSOURCE3_TX,  // uxPriority
+        // NULL  // pxCreatedTask
+    // );
+    
+    vTaskStartScheduler();
+
+    Serial.println("Failed to start FreeRTOS scheduler");
+    while(1);
 }
 
 void loop()
@@ -108,7 +150,6 @@ void printErrorCommunication()
 void initSerialTerminal()
 {
     // Initialize serial port
-    Serial.begin(115200);
     Serial.println(F("\nQuadrupole Mass Filter."));
     Serial.println(F("Type 'help' to display usage."));
     Serial.println();
@@ -240,11 +281,14 @@ void cmdFreqRange()
 
 void cmdTest()
 {
+    TRACE_ME( printf("cmdTest\r\n"); )
     if (!_qSource3.readTest())
     {
+        TRACE_ME( printf("... COMMUNICATION ERROR\r\n"); )
         printErrorCommunication();
         return;
     }
+    TRACE_ME( printf("... OK\r\n"); )
     Serial.println("OK");
 }
 
@@ -255,10 +299,13 @@ void cmdScanI()
 
 void cmdInfo()
 {
+    TRACE_ME( printf("cmdInfo\r\n"); )
     {
+        TRACE_ME( printf("... reading serial number ...\r\n"); )
         char buffer[64];
         if (!_qSource3.readSerialNo(buffer, 64))
         {
+            TRACE_ME( printf("... COMMUNICATION ERROR\r\n"); )
             printErrorCommunication();
             return;
         }
@@ -266,9 +313,11 @@ void cmdInfo()
         Serial.println(buffer);
     }
     {
+        TRACE_ME( printf("... reading frequency ...\r\n"); )
         int x = _qSource3.readFreq();
         if (x < 0)
         {
+            TRACE_ME( printf("... COMMUNICATION ERROR\r\n"); )
             printErrorCommunication();
             return;
         }
@@ -287,6 +336,7 @@ void cmdInfo()
         int x = _qSource3.readCurrent();
         if (x < 0)
         {
+            TRACE_ME( printf("... COMMUNICATION ERROR\r\n"); )
             printErrorCommunication();
             return;
         }
@@ -426,6 +476,7 @@ void taskUpdateDisplay(void *pvParameters)
 
 void taskQsource3Rx(void *pvParameters)
 {
+    streamQSource3.init();
     initCommJanasCardQSource3(0);
     for(;;)
     {
@@ -436,6 +487,7 @@ void taskQsource3Rx(void *pvParameters)
 
 void taskQsource3Tx(void *pvParameters)
 {
+    streamQSource3.init();
     initCommJanasCardQSource3(0);
     for(;;)
     {
