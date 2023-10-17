@@ -96,7 +96,7 @@ int RTOS_Stream::read()
 
 size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length)
 {
-    TRACE_RTOS_STREAM( printf("readBytesUntil(terminator=%x, buffer=%p, length=%u)\r\n", reinterpret_cast<uint32_t*>(terminator), static_cast<void*>(buffer), length); )
+    TRACE_RTOS_STREAM( printf("readBytesUntil(terminator=0x%02x, buffer=%p, length=%u)\r\n", reinterpret_cast<uint32_t*>(terminator), static_cast<void*>(buffer), length); )
     
     TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p.\r\n", _xMessageBufferTx); )
     if (_xMessageBufferRx == NULL) return 0;
