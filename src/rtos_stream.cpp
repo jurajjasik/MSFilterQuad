@@ -101,12 +101,6 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
     TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p.\r\n", _xMessageBufferTx); )
     if (_xMessageBufferRx == NULL) return 0;
 
-    if(xMessageBufferIsEmpty( _xMessageBufferRx ) == pdTRUE)
-    {
-        TRACE_RTOS_STREAM( printf("... _xMessageBufferRx is empty.\r\n"); )
-        return 0;
-    }
-
     uint8_t ucRxData[ RX_BUFFER_LENGTH ];
     size_t xReceivedBytes;
     size_t idx;
