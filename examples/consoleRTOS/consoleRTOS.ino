@@ -50,6 +50,9 @@ const int PRIORITY_TASK_TERMINAL = 1;
 const int PRIORITY_TASK_UPDATE_DISPLAY = 2;
 
 const size_t STACK_SIZE_TASK_TERMINAL = 512;
+const size_t STACK_SIZE_TASK_UPDATE_DISPLAY = 512;
+const size_t STACK_SIZE_TASK_QSOURCE3_RX = 128;
+const size_t STACK_SIZE_TASK_QSOURCE3_TX = 128;
 
 static_assert(STACK_SIZE_TASK_TERMINAL >= Q_SOURCE3_MIN_STACK_SIZE, "STACK_SIZE_TASK_TERMINAL too small");
 
@@ -95,43 +98,50 @@ void setup()
 {
     Serial.begin(115200);
     Serial.println("Test");
-    
+
+    streamQSource3.init();
+    initCommJanasCardQSource3(0);
+
+    // Initialize the built-in LED
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+
     xTaskCreate(
-        taskTerminal,  // pvTaskCode  
-        (const portCHAR *)"terminal",  // pcName  
+        taskTerminal,  // pvTaskCode
+        (const portCHAR *)"terminal",  // pcName
         STACK_SIZE_TASK_TERMINAL,  // usStackDepth
         NULL,  // pvParameters
         PRIORITY_TASK_TERMINAL,  // uxPriority
         NULL  // pxCreatedTask
     );
-    
-    // xTaskCreate(
-        // taskUpdateDisplay,  // pvTaskCode  
-        // (const portCHAR *)"update display",  // pcName  
-        // 128,  // usStackDepth
-        // NULL,  // pvParameters
-        // PRIORITY_TASK_UPDATE_DISPLAY,  // uxPriority
-        // NULL  // pxCreatedTask
-    // );    
 
-    // xTaskCreate(
-        // taskQsource3Rx,  // pvTaskCode  
-        // (const portCHAR *)"QSource3 Rx",  // pcName  
-        // 128,  // usStackDepth
-        // NULL,  // pvParameters
-        // PRIORITY_TASK_QSOURCE3_RX,  // uxPriority
-        // NULL  // pxCreatedTask
-    // );
+    xTaskCreate(
+        taskUpdateDisplay,  // pvTaskCode
+        (const portCHAR *)"update display",  // pcName
+        STACK_SIZE_TASK_UPDATE_DISPLAY,  // usStackDepth
+        NULL,  // pvParameters
+        PRIORITY_TASK_UPDATE_DISPLAY,  // uxPriority
+        NULL  // pxCreatedTask
+    );
 
-    // xTaskCreate(
-        // taskQsource3Tx,  // pvTaskCode  
-        // (const portCHAR *)"QSource3 Rx",  // pcName  
-        // 128,  // usStackDepth
-        // NULL,  // pvParameters
-        // PRIORITY_TASK_QSOURCE3_TX,  // uxPriority
-        // NULL  // pxCreatedTask
-    // );
-    
+    xTaskCreate(
+        taskQsource3Rx,  // pvTaskCode
+        (const portCHAR *)"QSource3 Rx",  // pcName
+        STACK_SIZE_TASK_QSOURCE3_RX,  // usStackDepth
+        NULL,  // pvParameters
+        PRIORITY_TASK_QSOURCE3_RX,  // uxPriority
+        NULL  // pxCreatedTask
+    );
+
+    xTaskCreate(
+        taskQsource3Tx,  // pvTaskCode
+        (const portCHAR *)"QSource3 Rx",  // pcName
+        STACK_SIZE_TASK_QSOURCE3_TX,  // usStackDepth
+        NULL,  // pvParameters
+        PRIORITY_TASK_QSOURCE3_TX,  // uxPriority
+        NULL  // pxCreatedTask
+    );
+
     vTaskStartScheduler();
 
     Serial.println("Failed to start FreeRTOS scheduler");
@@ -343,36 +353,36 @@ void cmdInfo()
         Serial.print("   Current [mA]: ");
         Serial.println((float)x / 10.0);
     }
-	
+
 	// MS filter info
 	{
 		Serial.println();
 		// too lazy to use Serial.println() in the following
-		char buff[1024];
-		
+		char buff[128];
+
 		sprintf(buff, "   DC1 [V]: %.2f", msfq.getActualMSFilter()->getDC1());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   DC2 [V]: %.2f", msfq.getActualMSFilter()->getDC2());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   RF 0-p [V]: %.2f", msfq.getActualMSFilter()->getDC2());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   DC diff [V]: %.2f", msfq.getActualMSFilter()->getDCDiff());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   DC ofst [V]: %.2f", msfq.getActualMSFilter()->getDCOffst());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   rod polarity: %s", msfq.getActualMSFilter()->isRodPolarityPos() ? "POS" : "NEG");
 		Serial.println(buff);
-		
+
 		Serial.println();
-		
+
 		sprintf(buff, "   m/z [u/e]: %.2f", msfq.getActualMSFilter()->getDCOffst());
 		Serial.println(buff);
-		
+
 		sprintf(buff, "   DC on: %s", msfq.getActualMSFilter()->isDCOn() ? "TRUE" : "FALSE");
 		Serial.println(buff);
 	}
@@ -435,9 +445,9 @@ void cmdCalc()
         printErrorCommunication();
         return;
     }
-	
+
 	Serial.println("debug");
-	
+
 	float rf = msfq.getActualMSFilter()->calcRF(mz);
 	float dc = msfq.getActualMSFilter()->calcDC(mz);
 	Serial.print("RF amp 0-p [V]: "); Serial.println(rf);
@@ -450,7 +460,7 @@ void taskTerminal(void *pvParameters)
     initSerialTerminal();
     Serial.println("Trying to init QSource3. Press CTRL-C to break...");
     flagTurnOn = true;
-    
+
     for(;;)
     {
         // Read from serial port and handle command callbacks
@@ -462,10 +472,6 @@ void taskTerminal(void *pvParameters)
 
 void taskUpdateDisplay(void *pvParameters)
 {
-    // Initialize the built-in LED
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
-
     for(;;)
     {
         refreshDisplay();
@@ -476,8 +482,6 @@ void taskUpdateDisplay(void *pvParameters)
 
 void taskQsource3Rx(void *pvParameters)
 {
-    streamQSource3.init();
-    initCommJanasCardQSource3(0);
     for(;;)
     {
         streamQSource3.workRx('\r');
@@ -487,8 +491,6 @@ void taskQsource3Rx(void *pvParameters)
 
 void taskQsource3Tx(void *pvParameters)
 {
-    streamQSource3.init();
-    initCommJanasCardQSource3(0);
     for(;;)
     {
         streamQSource3.workTx();
