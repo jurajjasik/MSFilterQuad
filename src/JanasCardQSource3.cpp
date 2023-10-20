@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 
-#define TRACE_QSOURCE3(x_) printf("%d ms -> JanasCardQSource3: ", millis()); x_
-// #define TRACE_QSOURCE3(x_)
+// #define TRACE_QSOURCE3(x_) printf("%d ms -> JanasCardQSource3: ", millis()); x_
+#define TRACE_QSOURCE3(x_)
 
 #ifdef TEST_Q_SOURCE3
 #pragma message ("JanasCardQSource3 in test mode!")

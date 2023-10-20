@@ -1,7 +1,7 @@
 #include "rtos_stream.h"
 
-#define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
-// #define TRACE_RTOS_STREAM(x_)
+// #define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
+#define TRACE_RTOS_STREAM(x_)
 
 RTOS_Stream::RTOS_Stream(Stream *stream, int timeout)
 :_stream(stream)

@@ -1,7 +1,7 @@
 #include "MSFilterQuad.h"
 
-#define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
-// #define TRACE_MSFQ(x_)
+// #define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
+#define TRACE_MSFQ(x_)
 
 
 void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) {
