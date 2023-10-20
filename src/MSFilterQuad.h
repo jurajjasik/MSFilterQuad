@@ -256,7 +256,7 @@ class MSFilterQuad3
 private:
     MSFilterQuad _msfq[3];
     JanasCardQSource3* _device;
-    int32_t _freqRange = -1;
+    size_t _freqRange = 0;
 
 public:
     /// <summary>
@@ -286,9 +286,9 @@ public:
     /// <param name="freqRange">- has range 0-2, where 0 is the highest range typically 1050 kHz,
     /// 1 – 480 kHz, 2 – 240 kHz.</param>
     /// <returns>true if succeeded</returns>
-    bool setFreqRangeIdx(int32_t freqRange);
+    bool setFreqRangeIdx(size_t freqRange);
 
-    int32_t getActualFreqRangeIdx(void) const { return _freqRange; }
+    size_t getActualFreqRangeIdx(void) const { return _freqRange; }
 
     /// <summary>
     /// Gets actual quadrupole MS filter.
