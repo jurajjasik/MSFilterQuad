@@ -76,7 +76,7 @@ size_t JanasCardQSource3::_write(const char* buff)
     TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
 
 #ifndef USE_RTOS
-    if (_comm_busy) return;
+    if (_comm_busy) return 0;
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
     _comm_busy = true;
 #endif  /* ifndef USE_RTOS */
