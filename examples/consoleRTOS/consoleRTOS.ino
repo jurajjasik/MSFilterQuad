@@ -51,8 +51,8 @@ const int PRIORITY_TASK_UPDATE_DISPLAY = 2;
 
 const size_t STACK_SIZE_TASK_TERMINAL = 512;
 const size_t STACK_SIZE_TASK_UPDATE_DISPLAY = 512;
-const size_t STACK_SIZE_TASK_QSOURCE3_RX = 128;
-const size_t STACK_SIZE_TASK_QSOURCE3_TX = 128;
+const size_t STACK_SIZE_TASK_QSOURCE3_RX = 512;
+const size_t STACK_SIZE_TASK_QSOURCE3_TX = 512;
 
 static_assert(STACK_SIZE_TASK_TERMINAL >= Q_SOURCE3_MIN_STACK_SIZE, "STACK_SIZE_TASK_TERMINAL too small");
 
@@ -135,7 +135,7 @@ void setup()
 
     xTaskCreate(
         taskQsource3Tx,  // pvTaskCode
-        (const portCHAR *)"QSource3 Rx",  // pcName
+        (const portCHAR *)"QSource3 Tx",  // pcName
         STACK_SIZE_TASK_QSOURCE3_TX,  // usStackDepth
         NULL,  // pvParameters
         PRIORITY_TASK_QSOURCE3_TX,  // uxPriority
@@ -482,19 +482,26 @@ void taskUpdateDisplay(void *pvParameters)
 
 void taskQsource3Rx(void *pvParameters)
 {
+    const TickType_t xTicksToWaitStream = pdMS_TO_TICKS(100);
+    const TickType_t xTicksToWaitBufferSend = portMAX_DELAY;
+    
     for(;;)
     {
-        streamQSource3.workRx('\r');
-        vTaskDelay(1);
+        streamQSource3.workRx(
+              '\r'  // terminator
+            , xTicksToWaitStream
+            , xTicksToWaitBufferSend
+        );
     }
 }
 
 void taskQsource3Tx(void *pvParameters)
 {
+    const TickType_t xTicksToWaitBufferReceive = portMAX_DELAY;
+    
     for(;;)
     {
-        streamQSource3.workTx();
-        vTaskDelay(1);
+        streamQSource3.workTx(xTicksToWaitBufferReceive);
     }
 }
 

@@ -10,7 +10,7 @@
 class RTOS_Stream
 {
 private:
-    Stream* _stream;
+    USARTClass* _stream;
     TickType_t _timeout;
 
     MessageBufferHandle_t _xMessageBufferTx = NULL;
@@ -20,12 +20,12 @@ private:
     size_t _rxIdx = 0;
 
 public:
-    RTOS_Stream(Stream* stream, int timeout);
+    RTOS_Stream(USARTClass* stream, int timeout);
     bool init();
     size_t write(const char* str);
     int available();
     int read();
     size_t readBytesUntil( char terminator, char *buffer, size_t length);
-    void workTx();
-    void workRx(char terminator);
+    void workTx(const TickType_t xTicksToWaitBufferReceive);
+    void workRx(char terminator, const TickType_t xTicksToWaitStream, const TickType_t xTicksToWaitBufferSend);
 };

@@ -1,9 +1,10 @@
 #include "rtos_stream.h"
+#include <task.h>
 
-// #define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
-#define TRACE_RTOS_STREAM(x_)
+#define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
+// #define TRACE_RTOS_STREAM(x_)
 
-RTOS_Stream::RTOS_Stream(Stream *stream, int timeout)
+RTOS_Stream::RTOS_Stream(USARTClass *stream, int timeout)
 :_stream(stream)
 {
     _timeout = pdMS_TO_TICKS(timeout);
@@ -24,8 +25,8 @@ bool RTOS_Stream::init()
     {
         TRACE_RTOS_STREAM( printf("... create _xMessageBufferRx...\r\n"); )
         _xMessageBufferRx = xMessageBufferCreate( RX_BUFFER_LENGTH );
+        TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p\r\n", _xMessageBufferRx); )
         if (_xMessageBufferRx == NULL) return false;
-        TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p\r\n", _xMessageBufferTx); )
     }
 
     return true;
@@ -136,24 +137,35 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
     return idx;
 }
 
-void RTOS_Stream::workTx()
+void RTOS_Stream::workTx(const TickType_t xTicksToWaitBufferReceive)
 {
     if (_xMessageBufferTx == NULL) return;
 
     uint8_t ucRxData[ RX_BUFFER_LENGTH ];
     size_t xReceivedBytes;
 
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() waiting for message ...\r\n"); )
     // wait indefinitely (without timing out), provided INCLUDE_vTaskSuspend is set to 1
     xReceivedBytes = xMessageBufferReceive( _xMessageBufferTx,
                                             ( void * ) ucRxData,
                                             sizeof( ucRxData ),
-                                            portMAX_DELAY  );
-
+                                            xTicksToWaitBufferReceive  );
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() ... %u bytes received. Writing to stream ...\r\n", xReceivedBytes); )
     _stream->write(( char * )ucRxData);
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() Writing to stream done\r\n"); )
 }
 
-void RTOS_Stream::workRx(char terminator)
+void RTOS_Stream::workRx(char terminator, const TickType_t xTicksToWaitStream, const TickType_t xTicksToWaitBufferSend)
 {
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() waiting for stream read ...\r\n"); )
+    
+    while(_stream->available() < 1)
+    {
+        vTaskDelay(xTicksToWaitStream);
+    }
+    
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... stream data available\r\n"); )
+    
     bool isTerminator = false;
     while((_stream->available()) && (_rxIdx < RX_BUFFER_LENGTH))
     {
@@ -166,16 +178,20 @@ void RTOS_Stream::workRx(char terminator)
         }
     }
 
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... %u bytes read from stream, isTerminator=%d\r\n", _rxIdx, isTerminator); )
+
     if(isTerminator || (_rxIdx == RX_BUFFER_LENGTH))
     {
         if (_xMessageBufferRx != NULL)
         {
+            TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() sending to _xMessageBufferRx ...\r\n"); )
             xMessageBufferSend(
                 _xMessageBufferRx,
                 ( void * ) _rxBuffer,
                 _rxIdx,
-                _timeout
+                xTicksToWaitBufferSend
             );
+            TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() sending to _xMessageBufferRx ... done\r\n"); )
         }
         _rxIdx = 0;
     }
