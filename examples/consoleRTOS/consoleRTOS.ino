@@ -2,8 +2,8 @@
 #include <MSFilterQuad.h>
 #include <JanasCardQSource3.h>
 
-#define TRACE_ME(x_) printf("%d ms -> consoleRTOS: ", millis()); x_
-// #define TRACE_ME(x_)
+// #define TRACE_ME(x_) printf("%d ms -> consoleRTOS: ", millis()); x_
+#define TRACE_ME(x_)
 
 #ifdef USE_RTOS
 

@@ -1,11 +1,11 @@
 #include "rtos_stream.h"
 #include <task.h>
 
-#define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
-// #define TRACE_RTOS_STREAM(x_)
+// #define TRACE_RTOS_STREAM(x_) printf("%d ms -> RTOS_Stream: ", millis()); x_
+#define TRACE_RTOS_STREAM(x_)
 
-RTOS_Stream::RTOS_Stream(USARTClass *stream, int timeout)
-:_stream(stream)
+RTOS_Stream::RTOS_Stream(USARTClass *usart, int timeout)
+:_usart(usart)
 {
     _timeout = pdMS_TO_TICKS(timeout);
 }
@@ -150,26 +150,31 @@ void RTOS_Stream::workTx(const TickType_t xTicksToWaitBufferReceive)
                                             ( void * ) ucRxData,
                                             sizeof( ucRxData ),
                                             xTicksToWaitBufferReceive  );
-    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() ... %u bytes received. Writing to stream ...\r\n", xReceivedBytes); )
-    _stream->write(( char * )ucRxData);
-    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() Writing to stream done\r\n"); )
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() ... %u bytes received. Writing to usart: \r\n", xReceivedBytes); )
+    for(size_t i = 0; i < xReceivedBytes; ++i)
+    {
+        // TRACE_RTOS_STREAM( printf("%c\r\n", ucRxData[i]); )
+        _usart->write(ucRxData[i]);
+    }
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() Writing to usart done\r\n"); )
 }
 
 void RTOS_Stream::workRx(char terminator, const TickType_t xTicksToWaitStream, const TickType_t xTicksToWaitBufferSend)
 {
-    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() waiting for stream read ...\r\n"); )
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() waiting for usart read ...\r\n"); )
     
-    while(_stream->available() < 1)
+    while(!_usart->available())
     {
         vTaskDelay(xTicksToWaitStream);
+        // TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() waiting for usart read ...\r\n"); )
     }
     
-    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... stream data available\r\n"); )
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... usart data available\r\n"); )
     
     bool isTerminator = false;
-    while((_stream->available()) && (_rxIdx < RX_BUFFER_LENGTH))
+    while((_usart->available()) && (_rxIdx < RX_BUFFER_LENGTH))
     {
-        char c = _stream->read();
+        char c = _usart->read();
         _rxBuffer[_rxIdx++] = c;
         if(c == terminator)
         {
@@ -178,7 +183,7 @@ void RTOS_Stream::workRx(char terminator, const TickType_t xTicksToWaitStream, c
         }
     }
 
-    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... %u bytes read from stream, isTerminator=%d\r\n", _rxIdx, isTerminator); )
+    TRACE_RTOS_STREAM( printf("RTOS_Stream::workRx() ... %u bytes read from usart, isTerminator=%d\r\n", _rxIdx, isTerminator); )
 
     if(isTerminator || (_rxIdx == RX_BUFFER_LENGTH))
     {

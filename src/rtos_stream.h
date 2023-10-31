@@ -10,7 +10,7 @@
 class RTOS_Stream
 {
 private:
-    USARTClass* _stream;
+    USARTClass* _usart;
     TickType_t _timeout;
 
     MessageBufferHandle_t _xMessageBufferTx = NULL;
