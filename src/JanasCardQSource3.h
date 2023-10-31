@@ -48,10 +48,8 @@ class JanasCardQSource3 {
         RTOS_Stream* _comm; // e.g. Serial2
 #else
         Stream* _comm;
-#endif
-
         volatile bool _comm_busy = false;
-
+#endif
         size_t _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
