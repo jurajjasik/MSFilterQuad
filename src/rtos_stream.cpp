@@ -36,7 +36,7 @@ size_t RTOS_Stream::write(const char* str)
     TRACE_RTOS_STREAM( printf("write(\"%s\")\r\n", str); )
     if (str == NULL) return 0;
 
-    TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p\r\n", _xMessageBufferTx); )
+    TRACE_RTOS_STREAM( printf("... _xMessageBufferTx=%p\r\n", _xMessageBufferTx); )
     if (_xMessageBufferTx == NULL) return 0;
 
     size_t xBytesSent;
@@ -98,7 +98,7 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
 {
     TRACE_RTOS_STREAM( printf("readBytesUntil(terminator=0x%02x, buffer=%p, length=%u)\r\n", reinterpret_cast<uint32_t*>(terminator), static_cast<void*>(buffer), length); )
 
-    TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p.\r\n", _xMessageBufferTx); )
+    TRACE_RTOS_STREAM( printf("... _xMessageBufferRx=%p.\r\n", _xMessageBufferRx); )
     if (_xMessageBufferRx == NULL) return 0;
 
     uint8_t ucRxData[ RX_BUFFER_LENGTH ];
