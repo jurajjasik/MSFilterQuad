@@ -61,6 +61,8 @@ class UARTClass : public HardwareSerial
     void IrqHandler(void);
 
     operator bool() { return true; }; // UART always active
+    
+    void setRxIrqCallback(void (*clbk)(uint8_t ch));
 
   protected:
     void init(const uint32_t dwBaudRate, const uint32_t config);
@@ -71,6 +73,8 @@ class UARTClass : public HardwareSerial
     Uart* _pUart;
     IRQn_Type _dwIrq;
     uint32_t _dwId;
+    
+    void (*rx_callback)(uint8_t);
 
 };
 

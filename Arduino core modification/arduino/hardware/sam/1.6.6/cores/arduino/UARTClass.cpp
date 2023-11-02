@@ -166,13 +166,22 @@ size_t UARTClass::write( const uint8_t uc_data )
   return 1;
 }
 
+void UARTClass::setRxIrqCallback(void (*clbk)(uint8_t))
+{
+    rx_callback = clbk;
+}
+
 void UARTClass::IrqHandler( void )
 {
   uint32_t status = _pUart->UART_SR;
 
   // Did we receive data?
   if ((status & UART_SR_RXRDY) == UART_SR_RXRDY)
-    _rx_buffer->store_char(_pUart->UART_RHR);
+  {
+    uint8_t ch = _pUart->UART_RHR;
+    _rx_buffer->store_char(ch);
+    if (rx_callback) rx_callback(ch);
+  }
 
   // Do we need to keep sending data?
   if ((status & UART_SR_TXRDY) == UART_SR_TXRDY) 
