@@ -15,6 +15,8 @@
 
 #ifdef USE_RTOS
 #include "rtos_stream.h"
+#include <FreeRTOS.h>
+#include <semphr.h>
 #endif
 
 // #define TEST_Q_SOURCE3
@@ -46,10 +48,13 @@ class JanasCardQSource3 {
     private:
 #ifdef USE_RTOS
         RTOS_Stream* _comm; // e.g. Serial2
+        SemaphoreHandle_t _xMutex = NULL;
+        TickType_t _xTicksToWait;
 #else
         Stream* _comm;
         volatile bool _comm_busy = false;
 #endif
+        size_t __write(const char* buff);
         size_t _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
         bool _queryOK(const char* query);
@@ -61,6 +66,7 @@ class JanasCardQSource3 {
         /// </summary>
 #ifdef USE_RTOS
         JanasCardQSource3(RTOS_Stream* comm);
+        void init(const TickType_t xTicksToWait);
 #else
         JanasCardQSource3(Stream* comm);
 #endif

@@ -100,6 +100,7 @@ void setup()
     Serial.println("Test");
 
     streamQSource3.init();
+    _qSource3.init(1000);  // 1000 ms timeout for write-read
     initCommJanasCardQSource3(0);
 
     // Initialize the built-in LED

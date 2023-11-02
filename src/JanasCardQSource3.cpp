@@ -53,8 +53,16 @@ inline int32_t _limit(int32_t x, int32_t max, int32_t min)
 #ifdef USE_RTOS
 JanasCardQSource3::JanasCardQSource3(RTOS_Stream *comm)
     :_comm(comm)
-{
+{  
 }
+
+
+void JanasCardQSource3::init(const TickType_t xTicksToWait)
+{
+    _xTicksToWait = xTicksToWait;
+    _xMutex = xSemaphoreCreateMutex();
+}
+
 #else
 JanasCardQSource3::JanasCardQSource3(Stream *comm)
     :_comm(comm)
@@ -71,8 +79,7 @@ void JanasCardQSource3::_clearBuffer()
 #endif
 }
 
-
-size_t JanasCardQSource3::_write(const char* buff)
+size_t JanasCardQSource3::__write(const char* buff)
 {
     TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
 
@@ -100,6 +107,20 @@ size_t JanasCardQSource3::_write(const char* buff)
 }
 
 
+size_t JanasCardQSource3::_write(const char* buff)
+{
+#ifdef USE_RTOS
+    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) return 0;
+#endif
+    size_t bytesSent = __write(buff);
+#ifdef USE_RTOS
+    xSemaphoreGive(_xMutex);
+#endif
+    
+    return bytesSent;
+}
+
+
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
 #ifndef TEST_Q_SOURCE3
@@ -108,10 +129,17 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 
     char buff[Q_SOURCE3_QUERY_BUFFER_SIZE];
     snprintf(buff, Q_SOURCE3_QUERY_BUFFER_SIZE, "%s\r", query);
-    size_t bytesSent = _write(buff);
+    
+#ifdef USE_RTOS
+    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) return false;
+#endif
+    size_t bytesSent = __write(buff);
     if(strlen(buff) != bytesSent)
     {
         TRACE_QSOURCE3( printf("... _write() ERROR. strlen(buff)=%u, bytesSent=%u\r\n", strlen(buff), bytesSent); )
+#ifdef USE_RTOS
+        xSemaphoreGive(_xMutex);
+#endif
         return false;
     }
     TRACE_QSOURCE3( printf("... _write() pass\r\n"); )
@@ -140,6 +168,9 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
 #endif
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
+#ifdef USE_RTOS
+    xSemaphoreGive(_xMutex);
+#endif
     if (n < buff_len) buffer[n] = '\0';  /* add terminal zero */
 
     TRACE_QSOURCE3(
@@ -253,9 +284,7 @@ bool JanasCardQSource3::writeVoltages(int32_t dc1, int32_t dc2, uint32_t ac)
 
     snprintf(buff, 128, "#C %d %d %d\r", dc1, dc2, ac);
 
-    _write(buff);
-
-    return true;
+    return _write(buff) == strlen(buff);
 }
 
 
