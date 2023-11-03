@@ -118,7 +118,12 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
                     _xQueueRx,
                     ( void * ) (buffer + idx),
                     &xHigherPriorityTaskWoken
-            )) ++idx;
+            ))
+            {
+                TRACE_RTOS_STREAM( printf("... %c received from ISR.\r\n", buffer[idx]); )
+                ++idx;
+            }
+            else break;
         }
         else
         {
@@ -126,13 +131,18 @@ size_t RTOS_Stream::readBytesUntil( char terminator, char *buffer, size_t length
                     _xQueueRx,
                     ( void * ) (buffer + idx),
                     _timeout
-            )) ++idx;
+            ))
+            {
+                TRACE_RTOS_STREAM( printf("... %c received.\r\n", buffer[idx]); )
+                ++idx;
+            }
+            else break;
         }
 
         if( (idx > 0) && (buffer[idx - 1] == terminator) ) break;
     }
 
-    TRACE_RTOS_STREAM( printf("... %u bytes received.\r\n", idx); )
+    TRACE_RTOS_STREAM( printf("... %u bytes received in total.\r\n", idx); )
 
     return idx;
 }

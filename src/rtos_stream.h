@@ -28,4 +28,6 @@ public:
     int read();
     size_t readBytesUntil( char terminator, char *buffer, size_t length);
     void workTx(const TickType_t xTicksToWaitBufferReceive);
+    
+    bool availableForWrite() const {return _usart->availableForWrite();}
 };
