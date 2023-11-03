@@ -44,21 +44,18 @@ void scanI();
 ///////////////////////////////////////////////////////////////////////////////
 
 // Low priority numbers denote low priority tasks.
-const int PRIORITY_TASK_QSOURCE3_RX = 4;
 const int PRIORITY_TASK_QSOURCE3_TX = 3;
 const int PRIORITY_TASK_TERMINAL = 1;
 const int PRIORITY_TASK_UPDATE_DISPLAY = 2;
 
 const size_t STACK_SIZE_TASK_TERMINAL = 512;
 const size_t STACK_SIZE_TASK_UPDATE_DISPLAY = 512;
-const size_t STACK_SIZE_TASK_QSOURCE3_RX = 512;
 const size_t STACK_SIZE_TASK_QSOURCE3_TX = 512;
 
 static_assert(STACK_SIZE_TASK_TERMINAL >= Q_SOURCE3_MIN_STACK_SIZE, "STACK_SIZE_TASK_TERMINAL too small");
 
 void taskTerminal(void *pvParameters);
 void taskUpdateDisplay(void *pvParameters);
-void taskQsource3Rx(void *pvParameters);
 void taskQsource3Tx(void *pvParameters);
 
 
@@ -122,15 +119,6 @@ void setup()
         STACK_SIZE_TASK_UPDATE_DISPLAY,  // usStackDepth
         NULL,  // pvParameters
         PRIORITY_TASK_UPDATE_DISPLAY,  // uxPriority
-        NULL  // pxCreatedTask
-    );
-
-    xTaskCreate(
-        taskQsource3Rx,  // pvTaskCode
-        (const portCHAR *)"QSource3 Rx",  // pcName
-        STACK_SIZE_TASK_QSOURCE3_RX,  // usStackDepth
-        NULL,  // pvParameters
-        PRIORITY_TASK_QSOURCE3_RX,  // uxPriority
         NULL  // pxCreatedTask
     );
 
@@ -480,21 +468,6 @@ void taskUpdateDisplay(void *pvParameters)
     }
 }
 
-
-void taskQsource3Rx(void *pvParameters)
-{
-    const TickType_t xTicksToWaitStream = pdMS_TO_TICKS(100);
-    const TickType_t xTicksToWaitBufferSend = portMAX_DELAY;
-    
-    for(;;)
-    {
-        streamQSource3.workRx(
-              '\r'  // terminator
-            , xTicksToWaitStream
-            , xTicksToWaitBufferSend
-        );
-    }
-}
 
 void taskQsource3Tx(void *pvParameters)
 {

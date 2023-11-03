@@ -97,6 +97,7 @@ size_t JanasCardQSource3::__write(const char* buff)
 
     size_t bytesSent = _comm->write(buff);
     TRACE_QSOURCE3( printf("... _comm->write(buff): %d bytes sent\r\n", bytesSent); )
+    vTaskDelay( QSOURCE3_DWELL_TIME );  // TODO - check the right delay
 
 #ifndef USE_RTOS
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
@@ -113,6 +114,7 @@ size_t JanasCardQSource3::_write(const char* buff)
     if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) return 0;
 #endif
     size_t bytesSent = __write(buff);
+    
 #ifdef USE_RTOS
     xSemaphoreGive(_xMutex);
 #endif
