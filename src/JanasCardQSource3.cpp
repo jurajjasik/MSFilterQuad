@@ -95,6 +95,12 @@ size_t JanasCardQSource3::__write(const char* buff)
     _clearBuffer();
     TRACE_QSOURCE3( printf("..._clearBuffer() pass\r\n"); )
 
+    if(!_comm->availableForWrite())
+    {
+        _connected = false;
+        TRACE_QSOURCE3( printf("... _comm not available for write\r\n"); )
+        return 0;
+    }
     size_t bytesSent = _comm->write(buff);
     TRACE_QSOURCE3( printf("... _comm->write(buff): %d bytes sent\r\n", bytesSent); )
     vTaskDelay( QSOURCE3_DWELL_TIME );  // TODO - check the right delay
@@ -104,14 +110,25 @@ size_t JanasCardQSource3::__write(const char* buff)
     _comm_busy = false;
 #endif  /* ifndef USE_RTOS */
 
+    _lastWriteTS = millis();
     return bytesSent;
 }
 
 
 size_t JanasCardQSource3::_write(const char* buff)
 {
+    TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
+    
+    if(!_connected)
+    {
+        TRACE_QSOURCE3( printf("... not connected.\r\n"); )
+        return 0;
+    }
 #ifdef USE_RTOS
-    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) return 0;
+    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))){
+        TRACE_QSOURCE3( printf("... _xMutex blocked.\r\n"); )
+        return 0;
+    }
 #endif
     size_t bytesSent = __write(buff);
     
@@ -125,15 +142,22 @@ size_t JanasCardQSource3::_write(const char* buff)
 
 bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
 {
-#ifndef TEST_Q_SOURCE3
-
     TRACE_QSOURCE3( printf("_query(\"%s\")\r\n", query); )
-
+    if(!_connected)
+    {
+        TRACE_QSOURCE3( printf("... not connected.\r\n"); )
+        return false;
+    }
+#ifndef TEST_Q_SOURCE3
     char buff[Q_SOURCE3_QUERY_BUFFER_SIZE];
     snprintf(buff, Q_SOURCE3_QUERY_BUFFER_SIZE, "%s\r", query);
     
 #ifdef USE_RTOS
-    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) return false;
+    if((_xMutex == NULL) || (!xSemaphoreTake(_xMutex, _xTicksToWait))) 
+    {
+        TRACE_QSOURCE3( printf("... _xMutex blocked.\r\n"); )
+        return false;
+    }
 #endif
     size_t bytesSent = __write(buff);
     if(strlen(buff) != bytesSent)
@@ -161,6 +185,7 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     if(no_response)
     {
         TRACE_QSOURCE3( printf("... no response from device\r\n"); )
+        _connected = false;
         return false;
     }
 #endif
@@ -169,6 +194,7 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     _comm_busy = true;
     NVIC_DisableIRQ( UOTGHS_IRQn );  // disable USB interrupt
 #endif
+    _connected = false;  // make _connected true after successful reading
     size_t n = _comm->readBytesUntil('\r', buffer, buff_len);
 #ifdef USE_RTOS
     xSemaphoreGive(_xMutex);
@@ -183,8 +209,12 @@ bool JanasCardQSource3::_query(const char* query, char* buffer, size_t buff_len)
     NVIC_EnableIRQ( UOTGHS_IRQn );  // enable USB interrupt
     _comm_busy = false;
 #endif
-
-    return (n > 0);
+    
+    if(n > 0)
+    {
+        _connected = true;  // make _connected true after successful reading
+        return true;
+    }
 
 #else  /* ifndef TEST_Q_SOURCE3 */
 
@@ -231,8 +261,9 @@ bool JanasCardQSource3::readSerialNo(char* buffer, size_t buff_len)
 
 bool JanasCardQSource3::writeRSMode(uint32_t value)
 {
-    if (value) return _queryOK("#R1");
-    return _queryOK("#R0");
+    _connected = true; // this should be the first command of QSource3 initialization. _connected must be set to pass over _queryOK()
+    _connected = _queryOK(value ? "#R1":"R0");
+    return _connected;
 }
 
 

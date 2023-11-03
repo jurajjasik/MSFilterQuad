@@ -29,7 +29,7 @@ private:
     float _rfFactor;
     float _dcFactor;
 
-    bool _connected = false;
+    // bool _connected = false;
 
     float _mz = 0.0;
     float _dc1 = 0.0;
@@ -72,13 +72,6 @@ public:
     /// <param name="frequency">- frequency of the quadrupole</param>
     /// <param name="r0">- characteristic radius of the quadrupole</param>
     void initRFFactor(float r0, float frequency);
-
-    /// <summary>
-    /// Get boolean flag representing connection status.
-    /// </summary>
-    /// <param name=""></param>
-    /// <returns>true if last communication was successfull</returns>
-    bool isConnected(void) const { return _connected; }
 
     /// <summary>
     /// Sets DC voltage of quadrupole rods 1.
@@ -297,6 +290,13 @@ public:
     MSFilterQuad* getActualMSFilter (void) { return &(_msfq[_freqRange]); }
 
     MSFilterQuad* getMSFilter (int i) { return &(_msfq[i]); }
+    
+    /// <summary>
+    /// Get boolean flag representing connection status.
+    /// </summary>
+    /// <param name=""></param>
+    /// <returns>true if last communication was successfull</returns>
+    bool isConnected(void) const;
 };
 
 

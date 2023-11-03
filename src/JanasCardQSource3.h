@@ -56,6 +56,9 @@ class JanasCardQSource3 {
         Stream* _comm;
         volatile bool _comm_busy = false;
 #endif
+        bool _connected = false;
+        unsigned long _lastWriteTS = 0;
+        
         size_t __write(const char* buff);
         size_t _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
@@ -72,6 +75,10 @@ class JanasCardQSource3 {
 #else
         JanasCardQSource3(Stream* comm);
 #endif
+
+        bool isConnected() const {return _connected;}
+        
+        unsigned long lastWriteTS() const {return _lastWriteTS;}
 
         /// <summary>
         /// Communication test.

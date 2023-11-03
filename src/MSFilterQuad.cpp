@@ -3,7 +3,6 @@
 // #define TRACE_MSFQ(x_) printf("%d ms -> MSFilterQuad: ", millis()); x_
 #define TRACE_MSFQ(x_)
 
-
 void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) {
     if (records->_numberTuneParRecs > 2)
         spline->init(records->_tuneParMZ, records->_tuneParVal, records->_numberTuneParRecs);
@@ -120,8 +119,7 @@ bool MSFilterQuad::setDC1(float v)
     {
         v = MAX_DC;
     }
-    _connected = _device->writeDC(1, (int32_t)(v * 1000));  // convert V to mV
-    if (_connected)
+    if (_device->writeDC(1, (int32_t)(v * 1000)))  // convert V to mV
     {
         _dc1 = v;
         return true;
@@ -141,8 +139,7 @@ bool MSFilterQuad::setDC2(float v)
     {
         v = MAX_DC;
     }
-    _connected = _device->writeDC(2, (int32_t)(v * 1000));  // convert V to mV
-    if (_connected)
+    if (_device->writeDC(2, (int32_t)(v * 1000)))  // convert V to mV
     {
         _dc2 = v;
         return true;
@@ -205,8 +202,7 @@ bool MSFilterQuad::setRFAmp(float v)
     {
         v = MAX_RF_AMP;
     }
-    _connected = _device->writeAC((uint32_t)(v * 2000));  // convert V(0-p) to mV(p-p)
-    if (_connected)
+    if (_device->writeAC((uint32_t)(v * 2000)))  // convert V(0-p) to mV(p-p)
     {
         _rfAmp = v;
         return true;
@@ -245,12 +241,12 @@ bool MSFilterQuad::setVoltages(float rf, float dc1, float dc2)
         dc2 = MAX_DC;
     }
 
-    _connected = _device->writeVoltages(
+    bool rc = _device->writeVoltages(
         (int32_t)(dc1 * 1000),  // convert V to mV
         (int32_t)(dc2 * 1000),  // convert V to mV
         (uint32_t)(rf * 2000)  // convert V(0-p) to mV(p-p)
     );
-    if (_connected) {
+    if (rc) {
         _dc1 = dc1;
         _dc2 = dc2;
         _rfAmp = rf;
@@ -354,7 +350,7 @@ bool MSFilterQuad3::init(float r0)
         delay(delay_ms);
 
         TRACE_MSFQ( printf("... [%d]: check if connected ...\r\n", i); )
-        if (!_msfq[i].isConnected())
+        if (!isConnected())
         {
             TRACE_MSFQ( printf("... ERROR\r\n"); )
             return false;
@@ -373,3 +369,6 @@ bool MSFilterQuad3::setFreqRangeIdx(size_t freqRange){
     if(rc) _freqRange = freqRange;
     return rc;
 }
+
+bool MSFilterQuad3::isConnected(void) const {return _device->isConnected();}
+
