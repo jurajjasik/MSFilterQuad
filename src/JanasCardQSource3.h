@@ -58,7 +58,9 @@ class JanasCardQSource3 {
 #endif
         bool _connected = false;
         unsigned long _lastWriteTS = 0;
-        
+
+        int32_t _lastCurrent = -1;
+
         size_t __write(const char* buff);
         size_t _write(const char* buff);
         bool _query(const char* query, char* buffer, size_t buff_len);
@@ -77,8 +79,10 @@ class JanasCardQSource3 {
 #endif
 
         bool isConnected() const {return _connected;}
-        
+
         unsigned long lastWriteTS() const {return _lastWriteTS;}
+
+        int32_t lastCurrent() const {return _lastCurrent;}
 
         /// <summary>
         /// Communication test.

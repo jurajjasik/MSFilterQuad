@@ -390,14 +390,15 @@ int32_t JanasCardQSource3::readFreq(void)
 int32_t JanasCardQSource3::readCurrent(void)
 {
     char buff[64];
-
+    
+    _lastCurrent = -1;
     if (_query("#U", buff, 64))
     {
         char* pEnd;
-        return strtol(buff, &pEnd, 10);
+        _lastCurrent = strtol(buff, &pEnd, 10);
     }
 
-    return -1;
+    return _lastCurrent;
 }
 
 
