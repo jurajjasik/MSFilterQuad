@@ -73,6 +73,10 @@ size_t RTOS_Stream::write(const char* str)
 int RTOS_Stream::available()
 {
     if (_xQueueRx == NULL) return false;
+    if( xPortIsInsideInterrupt() )
+    {
+        return uxQueueMessagesWaitingFromISR( _xQueueRx );
+    }
     return uxQueueMessagesWaiting( _xQueueRx );
 }
 
