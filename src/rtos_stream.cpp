@@ -155,7 +155,7 @@ void RTOS_Stream::workTx(const TickType_t xTicksToWaitBufferReceive)
 {
     if (_xMessageBufferTx == NULL) return;
 
-    uint8_t ucRxData[ RX_BUFFER_LENGTH ];
+    uint8_t ucRxData[ TX_BUFFER_LENGTH ];
     size_t xReceivedBytes;
 
     TRACE_RTOS_STREAM( printf("RTOS_Stream::workTx() waiting for message ...\r\n"); )
