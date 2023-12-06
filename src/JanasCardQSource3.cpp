@@ -81,7 +81,7 @@ void JanasCardQSource3::_clearBuffer()
 
 size_t JanasCardQSource3::__write(const char* buff)
 {
-    TRACE_QSOURCE3( printf("_write(\"%s\")\r\n", buff); )
+    TRACE_QSOURCE3( printf("__write(\"%s\") ... \r\n", buff); )
 
 #ifndef USE_RTOS
     if (_comm_busy){
