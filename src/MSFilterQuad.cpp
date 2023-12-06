@@ -10,10 +10,12 @@ void _initSpline(const StateTuneParRecords* records, CubicSplineInterp* spline) 
 
 
 MSFilterQuad::MSFilterQuad(
+    float r0,
     JanasCardQSource3* device,
     StateTuneParRecords* calibPntsRF,
     StateTuneParRecords* calibPntsDC
-) {
+): _r0(r0)
+{
     // _dcFactor = 0.16784; // 1/2 * a0/q0 - theoretical value for infinity resolution
 
     _device = device;
@@ -29,11 +31,11 @@ MSFilterQuad::MSFilterQuad(
 }
 
 
-void MSFilterQuad::initRFFactor(float r0, float frequency) {
+void MSFilterQuad::initRFFactor(float frequency) {
     // _rfFactor = RF amp / (m/z)
     // _rfFactor = q0 * pi**2 * atomic_mass / elementary_charge * (r0 * frequency)**2
     // q0 = 0.706
-    _rfFactor = 7.22176e-8 * (r0 * r0 * frequency * frequency); // SI units
+    _rfFactor = 7.22176e-8 * (_r0 * _r0 * frequency * frequency); // SI units
     _dcFactor = 0.16784 * _rfFactor;  // 1/2 * a0/q0 - theoretical value for infinity resolution
     _MAX_MZ = MAX_RF_AMP / _rfFactor;
 }
@@ -49,6 +51,7 @@ void MSFilterQuad::initSplineDC() {
 }
 
 bool MSFilterQuad::resetMZ() {
+    TRACE_MSFQ( printf("resetMZ()\r\n"); )
     return setMZ(_mz);
 }
 
@@ -276,7 +279,28 @@ bool MSFilterQuad::setUV(float u, float v) {
 }
 
 
+bool MSFilterQuad::setFreq(float v)
+{
+    uint32_t freq = (uint32_t)round(v / 100.0);
+    
+    TRACE_MSFQ( printf("setFreq(%d)...\r\n", freq); )
+    
+    if (!_device->writeFreq(freq))
+    {
+        TRACE_MSFQ("... error\r\n");
+        return false;
+    }
+    
+    initRFFactor((float)freq * 100.0);
+    
+    _mz = 0;
+    TRACE_MSFQ("... done\r\n");
+    return true;
+}
+
+
 MSFilterQuad3::MSFilterQuad3(
+    float r0,
     JanasCardQSource3* device,
     StateTuneParRecords* calibPntsRF,
     StateTuneParRecords* calibPntsDC
@@ -287,6 +311,7 @@ MSFilterQuad3::MSFilterQuad3(
     for(int i = 0; i < 3; ++i)
     {
         _msfq[i] = MSFilterQuad(
+            r0,
             device,
             &(calibPntsRF[i]),
             &(calibPntsDC[i])
@@ -294,9 +319,9 @@ MSFilterQuad3::MSFilterQuad3(
     }
 }
 
-bool MSFilterQuad3::init(float r0)
+bool MSFilterQuad3::init()
 {
-    TRACE_MSFQ( printf("init(r0=%d)\r\n", static_cast<int>(r0 * 1e6)); )
+    TRACE_MSFQ( printf("init()\r\n"); )
     int delay_ms = 10;
     int delay_ms2 = 10;
 
@@ -342,10 +367,11 @@ bool MSFilterQuad3::init(float r0)
         TRACE_MSFQ( printf("... [%d]: stored freq = %d\r\n", i, f); )
 
         TRACE_MSFQ( printf("... [%d]: initRFFactor ...\r\n", i); )
-        _msfq[i].initRFFactor(r0, (float)f * 100.0);
+        _msfq[i].initRFFactor((float)f * 100.0);
 
         TRACE_MSFQ( printf("... [%d]: setVoltages(0, 0, 0) ...\r\n", i); )
         _msfq[i].setVoltages(0, 0, 0);
+        _msfq[i]._mz = 0;
 
         delay(delay_ms);
 

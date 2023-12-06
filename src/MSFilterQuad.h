@@ -26,6 +26,8 @@ class MSFilterQuad
     friend class MSFilterQuad3;
 
 private:
+    float _r0 = 0.0;
+    
     float _rfFactor;
     float _dcFactor;
 
@@ -54,24 +56,27 @@ public:
     /// <summary>
     /// Constructor.
     /// </summary>
+    /// <param name="r0">- characteristic radius of the quadrupole</param>
     /// <param name="device">- low-level device</param>
     /// <param name="calibPntsRF">- RF amplitude calibration table</param>
     /// <param name="calibPntsDC">- DC difference calibration table</param>
     MSFilterQuad(
+        float r0,
         JanasCardQSource3* device,
         StateTuneParRecords* calibPntsRF,
         StateTuneParRecords* calibPntsDC
     );
 
     // Service methods
+    
+    bool setFreq(float v);
 
         /// <summary>
     /// Initialize RF calibration according to the frequency and r0.
     /// Must be called before the first use of setMZ() or setDCOn().
     /// </summary>
     /// <param name="frequency">- frequency of the quadrupole</param>
-    /// <param name="r0">- characteristic radius of the quadrupole</param>
-    void initRFFactor(float r0, float frequency);
+    void initRFFactor(float frequency);
 
     /// <summary>
     /// Sets DC voltage of quadrupole rods 1.
@@ -259,6 +264,7 @@ public:
     /// <param name="calibPntsRF">- a pointer to array of RF amplitude calibration tables (with 3 members)</param>
     /// <param name="calibPntsDC">- a pointer to array of DC difference calibration tables (with 3 members)</param>
     MSFilterQuad3(
+        float r0,
         JanasCardQSource3* device,
         StateTuneParRecords* calibPntsRF,
         StateTuneParRecords* calibPntsDC
@@ -268,9 +274,8 @@ public:
     /// Initialize basic RF calibration of quadrupole MS filters using r0 and RF frequencies
     /// stored in JanasCardQSource3 hardware device.
     /// </summary>
-    /// <param name="r0">- characteristic radius of the quadrupole</param>
     /// <returns>true if succeeded</returns>
-    bool init(float r0);
+    bool init();
 
     /// <summary>
     /// Changes resonant frequency and corresponding mass measurement range of the
