@@ -31,8 +31,8 @@
 #define Q_SOURCE3_MAX_DC 75000
 #define Q_SOURCE3_MIN_DC -75000
 #define Q_SOURCE3_MAX_AC 650000
-#define Q_SOURCE3_MAX_FREQ 28000000
-#define Q_SOURCE3_MIN_FREQ 2000000
+#define Q_SOURCE3_MAX_FREQ 28000
+#define Q_SOURCE3_MIN_FREQ 2000
 
 void initCommJanasCardQSource3(uint32_t interrupt_priority);
 
